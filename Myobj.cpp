@@ -73,23 +73,97 @@ void Myobj::loop()
     }
 }
 
-//ro光线起点，rd光线方向的单位向量
-intersec_result Myobj::closet_ray_intersect(vec ro, vec rd)
-{
 
-    return intersec_result();
+//一条光线与一个三角形相交
+intersec_result Myobj::intersect_with_triangle(vec ro, vec rd, size_t s,size_t f)const
+{
+    std::array<vec, 3> abc = get_vertexes_of_facet(s, f);
+    vec a = abc[0];
+    vec b = abc[1];
+    vec c = abc[2];
+
+    double detA = vec::determinant(a - b, a - c, rd);
+
+    //detA=0
+    if (fabs(detA) < eps)
+    {
+        return intersec_result(false, s, f, 0, 0, 0);
+    }
+
+    double beta = vec::determinant(a - ro, a - c, rd) / detA;
+    double gamma = vec::determinant(a - b, a - ro, rd) / detA;
+    double t = vec::determinant(a - b, a - c, a - ro) / detA;
+
+    //交点不在三角形内部
+    if (beta < 0 || gamma < 0 || beta + gamma > 1 || t < 0)
+    {
+        return intersec_result(false, s, f, 0, 0, 0);
+    }
+
+    //成功相交
+    return intersec_result(true, s, f, beta, gamma, t);
+}
+
+//ro光线起点，rd光线方向的单位向量
+intersec_result Myobj::closet_ray_intersect(vec ro, vec rd)const
+{
+    intersec_result ans(false, 0, 0, 0, 0, DBL_MAX);
+    auto& shapes = reader.GetShapes();
+    for (size_t s = 0; s < shapes.size(); s++) {
+
+        for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
+            intersec_result rs = intersect_with_triangle(ro, rd, s, f);
+            if (rs.isIntersec)
+            {
+                if (rs.t < ans.t)
+                {
+                    ans = rs;
+                }
+            }
+        }
+    }
+    return ans;
 }
 
 //返回指定facet的三个顶点向量。序号为f的facet 属于序号为s的shape
 std::array<vec, 3> Myobj::get_vertexes_of_facet(size_t s, size_t f) const
 {
+    std::array<vec, 3> points;
+    
+    auto& attrib = reader.GetAttrib();
+    auto& shapes = reader.GetShapes();
 
-    return std::array<vec, 3>{vec(1, 2, 3), vec(4, 5, 6), vec(7, 8, 9)};
+    for (int i = 0; i < 3; i++)
+    {
+        tinyobj::index_t idx = shapes[s].mesh.indices[3 * f + i];
+
+        tinyobj::real_t vx = attrib.vertices[3 * size_t(idx.vertex_index) + 0];
+        tinyobj::real_t vy = attrib.vertices[3 * size_t(idx.vertex_index) + 1];
+        tinyobj::real_t vz = attrib.vertices[3 * size_t(idx.vertex_index) + 2];
+        points[i] = vec(vx, vy, vz);
+    }
+
+    return points;
 }
 
 //返回指定facet的三个法向向量。序号为f的facet 属于序号为s的shape
 std::array<vec, 3> Myobj::get_normals_of_facet(size_t s, size_t f) const
 {
-    return std::array<vec, 3>();
 
+    std::array<vec, 3> normals;
+
+    auto& attrib = reader.GetAttrib();
+    auto& shapes = reader.GetShapes();
+
+    for (int i = 0; i < 3; i++)
+    {
+        tinyobj::index_t idx = shapes[s].mesh.indices[3 * f + i];
+
+        tinyobj::real_t vx = attrib.normals[3 * size_t(idx.normal_index) + 0];
+        tinyobj::real_t vy = attrib.normals[3 * size_t(idx.normal_index) + 1];
+        tinyobj::real_t vz = attrib.normals[3 * size_t(idx.normal_index) + 2];
+        normals[i] = vec(vx, vy, vz);
+    }
+
+    return normals;
 }

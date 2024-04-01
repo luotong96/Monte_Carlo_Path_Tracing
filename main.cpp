@@ -8,6 +8,7 @@
 #include "Mylight.h"
 #include <iostream>
 #include <numbers>
+#include <chrono>
 
 const std::string root_file_path = ".\\Debug\\veach-mis\\veach-mis";
 //const std::string root_file_path = ".\\Debug\\cornell-box\\cornell-box";
@@ -58,9 +59,11 @@ RadianceRGB shoot(vec x, vec w, double &px)
 {
 	//Çó½»
 	intersec_result rs = veach.closet_ray_intersect(x, w);
-	
-	vec x1 = linear_interpolation(veach.get_vertexes_of_facet(rs.s, rs.f), 1.0 - rs.bgt[0] - rs.bgt[1], rs.bgt[0], rs.bgt[1]);
-	vec N = linear_interpolation(veach.get_normals_of_facet(rs.s, rs.f), 1.0 - rs.bgt[0] - rs.bgt[1], rs.bgt[0], rs.bgt[1]);
+	if (rs.isIntersec == false)
+		return RadianceRGB(0,0,0);
+
+	vec x1 = linear_interpolation(veach.get_vertexes_of_facet(rs.s, rs.f), 1.0 - rs.beta - rs.gamma, rs.beta, rs.gamma);
+	vec N = linear_interpolation(veach.get_normals_of_facet(rs.s, rs.f), 1.0 - rs.beta - rs.gamma, rs.beta, rs.gamma);
 	
 	tinyobj::material_t mtl = veach.reader.GetMaterials().at(veach.reader.GetShapes().at(rs.s).mesh.material_ids[rs.f]);
 	
@@ -74,7 +77,9 @@ RadianceRGB shoot(vec x, vec w, double &px)
 	double q = (mtl.diffuse[0] + mtl.diffuse[1] + mtl.diffuse[2] + mtl.specular[0] + mtl.specular[1] + mtl.specular[2]) / 6;
 	q = fmin(1, q);
 	
-	std::default_random_engine generator;
+	unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
+
+	std::default_random_engine generator(seed1);
 	std::uniform_real_distribution<double> distribution(0.0, 1.0);
 	double ksi = distribution(generator);
 
@@ -137,6 +142,10 @@ RadianceRGB shoot(vec x, vec w, double &px)
 	RadianceRGB ks = RadianceRGB(mtl.specular[0], mtl.specular[1], mtl.specular[2]);
 	double ns = mtl.shininess;
 	RadianceRGB Ie = Ii * (kd * N.dot_product(L) + ks * pow(H.dot_product(N), ns));
+	if (Ie.RGB[0] < 0 || Ie.RGB[1] < 0 || Ie.RGB[2] < 0)
+	{
+		;
+	}
 	return Ie;
 }
 int main()
@@ -145,6 +154,13 @@ int main()
 	veach.read();
 	lights.read();
 	lights.gather_light_triangles(veach.reader);
-	
+	for (int i = 0; i < 1000; i++)
+	{
+		std::cout << "Radiance: ";
+		double p = 1;
+		shoot(vec(28.2792, 5.2, 1.23612e-06), (vec(0.0, 2.8, 0.0)- vec(28.2792, 5.2, 1.23612e-06)).normalized(), p).print();
+		std::cout << " p:" << p << std::endl;
+	}
+
 	return 0;
 }
