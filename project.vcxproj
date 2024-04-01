@@ -101,10 +101,21 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Mylight.cpp" />
+    <ClCompile Include="Myobj.cpp" />
+    <ClCompile Include="pugixml.cpp" />
+    <ClCompile Include="RadianceRGB.cpp" />
+    <ClCompile Include="vec.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Mylight.h" />
+    <ClInclude Include="Myobj.h" />
+    <ClInclude Include="pugiconfig.hpp" />
+    <ClInclude Include="pugixml.hpp" />
+    <ClInclude Include="RadianceRGB.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="tiny_obj_loader.h" />
+    <ClInclude Include="vec.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="project.rc" />
