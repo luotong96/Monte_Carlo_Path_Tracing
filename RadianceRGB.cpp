@@ -36,6 +36,12 @@ RadianceRGB RadianceRGB::operator *(double c)const
     return RadianceRGB(RGB[0] * c, RGB[1] * c, RGB[2] * c);
 }
 
+RadianceRGB RadianceRGB::operator *(const RadianceRGB& b)const
+{
+    return RadianceRGB(RGB[0] * b.RGB[0], RGB[1] * b.RGB[1], RGB[2] * b.RGB[2]);
+}
+
+
 double RadianceRGB::sum()
 {
     return RGB[0] + RGB[1] + RGB[2];

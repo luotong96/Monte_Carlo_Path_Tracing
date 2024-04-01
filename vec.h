@@ -11,14 +11,16 @@ public:
 	vec(double a[]);
 
 	void operator = (const vec& b);
-	bool operator == (const vec& b);
-	vec operator +(const vec& b);
-	vec operator -(const vec& b);
+	bool operator == (const vec& b)const;
+	vec operator +(const vec& b)const;
+	vec operator -(const vec& b)const;
 	vec operator *(double c)const;
 	double norm2()const;
+	vec normalized()const;
+
 	vec cross_product(const vec& b)const;
 	double dot_product(const vec& b)const;
-	void print();
+	void print()const;
 
 	static double determinant(const vec& a, const vec& b, const vec& c);
 	static vec get_zero_vector();

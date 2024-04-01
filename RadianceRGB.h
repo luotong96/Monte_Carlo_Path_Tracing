@@ -19,6 +19,9 @@ public:
 	//RadianceÊý³Ë
 	RadianceRGB operator *(double c)const;
 
+	//Radiance pairwise ³Ë·¨
+	RadianceRGB operator *(const RadianceRGB& b)const;
+
 	//·µ»ØRGB[0]+RGB[1]+RGB[2]
 	double sum();
 

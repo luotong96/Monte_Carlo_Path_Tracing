@@ -135,7 +135,7 @@ sampledLightPoint Mylight::select_a_point_from_lights(const Myobj& myobj)
     //在单个三角形内部均匀随机取点
     lightTriangle sel = lt.at(aind);
 
-    //先在2d平面上beta+gamma<=1的三角形中均匀采样。 
+    //先在2d平面上beta>=0,gamma>=0，beta+gamma<=1的三角形中均匀采样。 
     std::uniform_real_distribution<double> distribution3(0.0, 1.0);
 
     double ksi1= distribution3(generator);

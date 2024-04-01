@@ -73,7 +73,7 @@ void Myobj::loop()
     }
 }
 
-//ro光线起点，rd光线方向
+//ro光线起点，rd光线方向的单位向量
 intersec_result Myobj::closet_ray_intersect(vec ro, vec rd)
 {
 
@@ -83,6 +83,7 @@ intersec_result Myobj::closet_ray_intersect(vec ro, vec rd)
 //返回指定facet的三个顶点向量。序号为f的facet 属于序号为s的shape
 std::array<vec, 3> Myobj::get_vertexes_of_facet(size_t s, size_t f) const
 {
+
     return std::array<vec, 3>{vec(1, 2, 3), vec(4, 5, 6), vec(7, 8, 9)};
 }
 

@@ -22,7 +22,7 @@ void vec::operator=(const vec& b)
 }
 
 //向量相等当且仅当各坐标相等
-bool vec::operator == (const vec& b)
+bool vec::operator == (const vec& b)const
 {
 	for (int i = 0; i < 3; i++)
 	{
@@ -32,12 +32,12 @@ bool vec::operator == (const vec& b)
 	return true;
 }
 
-vec vec::operator +(const vec& b)
+vec vec::operator +(const vec& b)const
 {
 	return vec(xyz[0] + b.xyz[0], xyz[1] + b.xyz[1], xyz[2] + b.xyz[2]);
 }
 
-vec vec::operator -(const vec& b)
+vec vec::operator -(const vec& b)const
 {
 	return vec(xyz[0] - b.xyz[0], xyz[1] - b.xyz[1], xyz[2] - b.xyz[2]);
 }
@@ -82,7 +82,13 @@ vec vec::get_zero_vector()
 	return vec(0, 0, 0);
 }
 
-void vec::print()
+void vec::print()const
 {
 	std::cout << xyz[0] << " " << xyz[1] << " " << xyz[2];
+}
+
+vec vec::normalized()const
+{
+	double len = norm2();
+	return vec(xyz[0] / len, xyz[1] / len, xyz[2] / len);
 }

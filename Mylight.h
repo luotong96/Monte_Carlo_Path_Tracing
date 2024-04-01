@@ -31,25 +31,25 @@ struct sampledLightPoint
 	//光源三角形的序号
 	size_t f;
 	//该点坐标
-	vec p;
+	vec coord;
 	//该点辐射亮度
 	RadianceRGB I;
 
 	//采样该点的概率密度
 	double prob;
 
-	sampledLightPoint(size_t s, size_t f, vec p, RadianceRGB I, double prob)
+	sampledLightPoint(size_t s, size_t f, vec coord, RadianceRGB I, double prob)
 	{
 		this->s = s;
 		this->f = f;
-		this->p = p;
+		this->coord = coord;
 		this->I = I;
 		this->prob = prob;
 	}
 	void print()
 	{
 		std::cout << s << "|" << f << "|";
-		p.print();
+		coord.print();
 		std::cout << "|";
 		I.print();
 		std::cout << "|" << prob << std::endl;

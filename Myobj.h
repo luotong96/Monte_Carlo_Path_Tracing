@@ -29,10 +29,10 @@ public:
     intersec_result closet_ray_intersect(vec ro, vec rd);
 
     //返回指定facet的三个顶点向量。序号为f的facet 属于序号为s的shape
-    std::array<vec,3> get_vertexes_of_facet(size_t s, size_t f)const;
+    std::array<vec,3> get_vertexes_of_facet(size_t s, size_t f) const;
 
     //返回指定facet的三个法向向量。序号为f的facet 属于序号为s的shape
-    std::array<vec,3> get_normals_of_facet(size_t s, size_t f)const;
+    std::array<vec,3> get_normals_of_facet(size_t s, size_t f) const;
 
 
 };
