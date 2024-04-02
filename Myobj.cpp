@@ -146,7 +146,7 @@ std::array<vec, 3> Myobj::get_vertexes_of_facet(size_t s, size_t f) const
     return points;
 }
 
-//返回指定facet的三个法向向量。序号为f的facet 属于序号为s的shape
+//返回指定facet的三个顶点法向向量。序号为f的facet 属于序号为s的shape
 std::array<vec, 3> Myobj::get_normals_of_facet(size_t s, size_t f) const
 {
 
@@ -166,4 +166,27 @@ std::array<vec, 3> Myobj::get_normals_of_facet(size_t s, size_t f) const
     }
 
     return normals;
+}
+
+vec Myobj::get_unique_normal_of_facet(size_t s, size_t f)const
+{
+    std::array<vec, 3> abc = get_vertexes_of_facet(s, f);
+    vec a = abc[0];
+    vec b = abc[1];
+    vec c = abc[2];
+    
+    std::array<vec, 3> nabc = get_normals_of_facet(s, f);
+    vec na = nabc[0].normalized();
+    vec nb = nabc[1].normalized();
+    vec nc = nabc[2].normalized();
+
+    vec n =(b - a).cross_product(c - a).normalized();
+    vec nr = n * -1;
+    double w = n.dot_product(na) + n.dot_product(nb) + n.dot_product(nc);
+    double wr = nr.dot_product(na) + nr.dot_product(nb) + nr.dot_product(nc);
+    if (w > wr)
+    {
+        return n;
+    }
+    return nr;
 }

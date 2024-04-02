@@ -48,9 +48,10 @@ public:
     //返回指定facet的三个顶点向量。序号为f的facet 属于序号为s的shape
     std::array<vec,3> get_vertexes_of_facet(size_t s, size_t f) const;
 
-    //返回指定facet的三个法向向量。序号为f的facet 属于序号为s的shape
+    //返回指定facet的三个顶点法向向量。序号为f的facet 属于序号为s的shape
     std::array<vec,3> get_normals_of_facet(size_t s, size_t f) const;
 
-
+    //计算并返回指定facet的唯一真实面法向量
+    vec get_unique_normal_of_facet(size_t s, size_t f)const;
 };
 

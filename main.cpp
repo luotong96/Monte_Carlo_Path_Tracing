@@ -64,7 +64,8 @@ RadianceRGB shoot(vec x, vec w, double &px)
 
 	vec x1 = linear_interpolation(veach.get_vertexes_of_facet(rs.s, rs.f), 1.0 - rs.beta - rs.gamma, rs.beta, rs.gamma);
 	vec N = linear_interpolation(veach.get_normals_of_facet(rs.s, rs.f), 1.0 - rs.beta - rs.gamma, rs.beta, rs.gamma);
-	
+	//vec N = veach.get_unique_normal_of_facet(rs.s, rs.f);
+
 	tinyobj::material_t mtl = veach.reader.GetMaterials().at(veach.reader.GetShapes().at(rs.s).mesh.material_ids[rs.f]);
 	
 	//用于回溯计算radiance的变量
@@ -135,6 +136,11 @@ RadianceRGB shoot(vec x, vec w, double &px)
 		//光路反转，采样得到的v方向成为计算x1向x反射能量过程中的L方向。
 		L = v;
 		H = (L + V).normalized();
+		if (N.dot_product(L) < 0 || H.dot_product(N) < 0)
+		{
+			double a = N.dot_product(L);
+			double b = H.dot_product(N);
+		}
 	}
 	
 	//开始使用blin-phong计算Radiance
@@ -142,10 +148,15 @@ RadianceRGB shoot(vec x, vec w, double &px)
 	RadianceRGB ks = RadianceRGB(mtl.specular[0], mtl.specular[1], mtl.specular[2]);
 	double ns = mtl.shininess;
 	RadianceRGB Ie = Ii * (kd * N.dot_product(L) + ks * pow(H.dot_product(N), ns));
-	if (Ie.RGB[0] < 0 || Ie.RGB[1] < 0 || Ie.RGB[2] < 0)
+	if (N.dot_product(L) < 0 || H.dot_product(N) < 0)
 	{
-		;
+		double a = N.dot_product(L);
+		double b = H.dot_product(N);
 	}
+	/*if (Ie.RGB[0] < 0 || Ie.RGB[1] < 0 || Ie.RGB[2] < 0)
+	{
+		printf("147\n");
+	}*/
 	return Ie;
 }
 int main()
@@ -158,7 +169,7 @@ int main()
 	{
 		std::cout << "Radiance: ";
 		double p = 1;
-		shoot(vec(28.2792, 5.2, 1.23612e-06), (vec(0.0, 2.8, 0.0)- vec(28.2792, 5.2, 1.23612e-06)).normalized(), p).print();
+		shoot(vec(28.2792, 5.2, 1.23612e-06), (vec(0.0, 2.8, 0.0) - vec(28.2792, 5.2, 1.23612e-06)).normalized(), p).print();
 		std::cout << " p:" << p << std::endl;
 	}
 
