@@ -9,15 +9,16 @@
 #include <iostream>
 #include <numbers>
 #include <chrono>
+#include "matrix3d.h"
 
-const std::string root_file_path = ".\\Debug\\veach-mis\\veach-mis";
-//const std::string root_file_path = ".\\Debug\\cornell-box\\cornell-box";
+//const std::string root_file_path = ".\\Debug\\veach-mis\\veach-mis";
+const std::string root_file_path = ".\\Debug\\cornell-box\\cornell-box";
 //const std::string root_file_path = ".\\Debug\\bathroom\\bathroom";
 
 Myobj veach(root_file_path + ".obj");
 Mylight lights(root_file_path + ".xml");
 
-inline vec linear_interpolation(std::array<vec, 3> vlist, double a, double b, double c)
+inline vec linear_interpolation(const std::array<vec, 3>& vlist, double a, double b, double c)
 {
 	return vlist[0] * a + vlist[1] * b + vlist[2] * c;
 }
@@ -48,6 +49,37 @@ inline double inverse_F_theta(double x, double y, double n, double ksi,double er
 	return theta;
 }
 
+inline double cal_theta0(double a1,double a2,double a3,double phi)
+{
+	const double eps = 1e-8;
+	//另外一种a1 * cos(phi) + a2 * sin(phi) = 0的情况不存在，除非入射光与平面法向垂直。可画图分析
+	if (fabs(a1) < eps && fabs(a2) < eps)
+		return 0.5 * std::numbers::pi;
+	return atan(-a3 / (a1 * cos(phi) + a2 * sin(phi)));
+}
+
+//integrand_func被积函数
+inline double func(double phi, double x, double y, double n,double a1, double a2, double a3)
+{
+	//double theta0 = atan(-a3 / (a1 * cos(phi) + a2 * sin(phi)));
+	double theta0 = cal_theta0(a1, a2, a3, phi);
+	return x * cos(theta0) + y * pow(cos(theta0), n + 1) / (n + 1);
+}
+
+//计算Rejection采样中条件概率密度的乘积因子M。
+inline double cal_M(double c2, double x, double y, double n, double a1, double a2, double a3)
+{
+	int interval_n = 100;
+	double h = std::numbers::pi/ interval_n;
+	double sum = 0;
+	for (int i = 0; i < interval_n; i++)
+	{
+		sum += h * (func(i * h, x, y, n, a1, a2, a3) + 4 * func((i + 0.5) * h, x, y, n, a1, a2, a3) + func((i + 1) * h, x, y, n, a1, a2, a3)) / 6;
+	}
+	
+	return 1.0 / (1 - c2 * sum);
+}
+
 //Path tracing，由摄像头发射光线。
 //wi* x        .x2 wo*
 //     .      .
@@ -55,16 +87,23 @@ inline double inverse_F_theta(double x, double y, double n, double ksi,double er
 //  w*   .x1
 //从x点沿着w方向射出光线，w为单位向量。到达x点并沿w方向射出的累积概率密度是px。返回值是从光源射入x的radiance。
 //递归向下求概率，回溯算radiance。
-RadianceRGB shoot(vec x, vec w, double &px)
+RadianceRGB shoot(vec x, vec w, double &px, int& step)
 {
+	step++;
 	//求交
 	intersec_result rs = veach.closet_ray_intersect(x, w);
 	if (rs.isIntersec == false)
 		return RadianceRGB(0,0,0);
 
 	vec x1 = linear_interpolation(veach.get_vertexes_of_facet(rs.s, rs.f), 1.0 - rs.beta - rs.gamma, rs.beta, rs.gamma);
-	vec N = linear_interpolation(veach.get_normals_of_facet(rs.s, rs.f), 1.0 - rs.beta - rs.gamma, rs.beta, rs.gamma);
+	vec N = linear_interpolation(veach.get_normals_of_facet(rs.s, rs.f), 1.0 - rs.beta - rs.gamma, rs.beta, rs.gamma).normalized();
 	//vec N = veach.get_unique_normal_of_facet(rs.s, rs.f);
+	if (N.dot_product(w * -1) < 0)
+	{
+		printf("95\n");
+		return RadianceRGB(0, 0, 0);
+	}
+	
 
 	tinyobj::material_t mtl = veach.reader.GetMaterials().at(veach.reader.GetShapes().at(rs.s).mesh.material_ids[rs.f]);
 	
@@ -77,7 +116,7 @@ RadianceRGB shoot(vec x, vec w, double &px)
 	//俄罗斯轮盘,以q的概率继续发射光线。q取kd（3项）和ks（3项）的6项平均值。
 	double q = (mtl.diffuse[0] + mtl.diffuse[1] + mtl.diffuse[2] + mtl.specular[0] + mtl.specular[1] + mtl.specular[2]) / 6;
 	q = fmin(1, q);
-	
+
 	unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
 
 	std::default_random_engine generator(seed1);
@@ -107,7 +146,7 @@ RadianceRGB shoot(vec x, vec w, double &px)
 	}
 	else
 	{
-		//从Blin-phong模型的brdf中sample新的出射方向。
+		//从Phong模型的brdf中sample新的出射方向。
 		//递归向下的时候，并不知道是什么颜色的光，因此直接使用kd各个维度的和。
 		//这里使用-w作为入射光是因为目前还在从摄像头开始，递归向下的阶段。使用brdf来随机产生新的出射方向，目前的光路与回溯计算Radiance的光路是相反的。
 		vec l = w * -1;
@@ -121,17 +160,68 @@ RadianceRGB shoot(vec x, vec w, double &px)
 
 		double ksi2 = distribution(generator);
 		double phi = 2 * std::numbers::pi * ksi2;
-		//h是l与v的半角单位向量
-		vec h(cos(phi) * sin(theta), sin(phi) * sin(theta), cos(theta));
-		//假设光线与三角形在同一平面是视为不相交，可以保证半角向量h一定不为0
-		vec v = h * (2 * h.dot_product(l)) - l;
+
+
+		//specular反射中，N与反射光r的内积，等于N与入射光l的内积。
+		double NR = N.dot_product(l);
+		//sqNR仅为计算中间过程暂存变量。
+		double sqNR = sqrt(1 - pow(NR, 2));
 		
+		
+		vec R;
+		matrix3d T;
+
+		//退化情况：入射光线l与法向N重合
+		if (N.cross_product(l).isZero())
+		{
+			R = N;
+			vec tmp = vec(N);
+			tmp.xyz[0] += 5;
+			vec yvec = N.cross_product(tmp).normalized();
+			vec xvec = yvec.cross_product(N).normalized();
+			T = matrix3d(xvec, yvec, N);
+		}
+		else
+		{
+			R = ((N * (N.dot_product(l) * 2)) - l).normalized();
+			//matrix3d T = matrix3d(N.cross_product(l).normalized(), N.cross_product(N.cross_product(l)).normalized(), N) * matrix3d(vec(1, 0, 0), vec(0, NR, -sqNR), vec(0, sqNR, NR));
+			T = matrix3d(N.cross_product(l).normalized(), R.cross_product(N.cross_product(l).normalized()).normalized(), R);
+		}
+		
+		//N向量坐标变换到以R为主轴的xyz坐标系
+		vec na = (T.transpose() * N).normalized();
+
+		double a1 = na.xyz[0];
+		double a2 = na.xyz[1];
+		double a3 = na.xyz[2];
+		//double theta0 = atan(-a3 / (a1 * cos(phi) + a2 * sin(phi)));
+		double theta0 = cal_theta0(a1, a2, a3, phi);
+
+		//Rejection 采样
+		if (phi > 0 && phi < std::numbers::pi)
+		{
+			while (theta > theta0)
+			{
+				ksi1 = distribution(generator);
+				theta = inverse_F_theta(x, y, n, ksi1, 1e-9);
+			}
+		}
+		
+		
+		//以反射光r为中心轴的theta,phi坐标转换到世界坐标系xyz坐标。
+		vec v = T * vec(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
+
+		//防止计算累计误差
+		v = v.normalized();
+
+		double M = cal_M(1.0 / (2 * std::numbers::pi * (x + y / (n + 1))), x, y, n, a1, a2, a3);
+
 		//累乘新方向的概率密度
-		double prob = (x + y * pow(cos(theta), n)) * sin(theta) / (2 * std::numbers::pi * (x + y / (n + 1.0)));
+		double prob = (x + y * pow(cos(theta), n)) * sin(theta) / (2 * std::numbers::pi * (x + y / (n + 1.0))) * M;
 		px *= prob;
 
 		//返回Radiance,有Russian Roulette，需要用1/q修正返回的能量
-		Ii = shoot(x1, v, px) * (1.0 / q);
+		Ii = shoot(x1, v, px, step) * (1.0 / q);
 		
 		//光路反转，采样得到的v方向成为计算x1向x反射能量过程中的L方向。
 		L = v;
@@ -165,13 +255,30 @@ int main()
 	veach.read();
 	lights.read();
 	lights.gather_light_triangles(veach.reader);
-	for (int i = 0; i < 1000; i++)
+
+	//veach
+	//vec start = vec(28.2792, 5.2, 1.23612e-06);
+	//vec w = (vec(0.0, 2.8, 0.0) - start).normalized();
+	
+	//conerll
+	vec start = vec(278.0, 273.0, -800.0);
+	vec w = (vec(278.0, 273.0, -799.0) - start).normalized();
+	
+	//bathroom
+	//vec start = vec(0.0072405338287353516, 0.9124049544334412, -0.2275838851928711);
+	//vec w = (vec(-2.787562608718872, 0.9699121117591858, -2.6775901317596436) - start).normalized();
+
+	RadianceRGB sum;
+	for (int i = 0; i < 100; i++)
 	{
 		std::cout << "Radiance: ";
 		double p = 1;
-		shoot(vec(28.2792, 5.2, 1.23612e-06), (vec(0.0, 2.8, 0.0) - vec(28.2792, 5.2, 1.23612e-06)).normalized(), p).print();
-		std::cout << " p:" << p << std::endl;
+		int step = 0;
+		//sum = sum + shoot(start, w, p,step);
+		//sum.print();
+		shoot(start, w, p, step).print();
+		std::cout << " p:" << p << " step:" << step<<std::endl;
 	}
-
+	//sum.print();
 	return 0;
 }

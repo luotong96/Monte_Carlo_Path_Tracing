@@ -95,7 +95,7 @@ intersec_result Myobj::intersect_with_triangle(vec ro, vec rd, size_t s,size_t f
     double t = vec::determinant(a - b, a - c, a - ro) / detA;
 
     //交点不在三角形内部
-    if (beta < 0 || gamma < 0 || beta + gamma > 1 || t < 0)
+    if (beta < 0 || gamma < 0 || beta + gamma > 1 || t < 0||fabs(t)<eps)
     {
         return intersec_result(false, s, f, 0, 0, 0);
     }
@@ -110,7 +110,6 @@ intersec_result Myobj::closet_ray_intersect(vec ro, vec rd)const
     intersec_result ans(false, 0, 0, 0, 0, DBL_MAX);
     auto& shapes = reader.GetShapes();
     for (size_t s = 0; s < shapes.size(); s++) {
-
         for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
             intersec_result rs = intersect_with_triangle(ro, rd, s, f);
             if (rs.isIntersec)
@@ -184,6 +183,7 @@ vec Myobj::get_unique_normal_of_facet(size_t s, size_t f)const
     vec nr = n * -1;
     double w = n.dot_product(na) + n.dot_product(nb) + n.dot_product(nc);
     double wr = nr.dot_product(na) + nr.dot_product(nb) + nr.dot_product(nc);
+    return n;
     if (w > wr)
     {
         return n;

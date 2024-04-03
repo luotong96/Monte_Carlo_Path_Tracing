@@ -54,6 +54,12 @@ double vec::norm2()const
 	return sqrt(xyz[0] * xyz[0] + xyz[1] * xyz[1] + xyz[2] * xyz[2]);
 }
 
+bool vec::isZero()const
+{
+	return norm2() < eps;
+}
+
+
 //向量叉积，直接用3阶行列式推出来即可。
 vec vec::cross_product(const vec & b)const
 {

@@ -20,6 +20,7 @@ public:
 
 	vec cross_product(const vec& b)const;
 	double dot_product(const vec& b)const;
+	bool isZero()const;
 	void print()const;
 
 	static double determinant(const vec& a, const vec& b, const vec& c);
