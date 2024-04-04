@@ -22,6 +22,8 @@ void Myobj::read()
     if (!reader.Warning().empty()) {
         std::cout << "TinyObjReader: " << reader.Warning();
     }
+
+    std::cout << "总facet数量：" << reader.GetShapes()[0].mesh.num_face_vertices.size() << std::endl;
     std::cout << "obj文件数据读取完成" << std::endl;
 }
 void Myobj::loop()

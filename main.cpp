@@ -10,9 +10,11 @@
 #include <numbers>
 #include <chrono>
 #include "matrix3d.h"
+#include <graphics.h>		// 引用 EasyX 绘图库头文件
 
-//const std::string root_file_path = ".\\Debug\\veach-mis\\veach-mis";
-const std::string root_file_path = ".\\Debug\\cornell-box\\cornell-box";
+
+const std::string root_file_path = ".\\Debug\\veach-mis\\veach-mis";
+//const std::string root_file_path = ".\\Debug\\cornell-box\\cornell-box";
 //const std::string root_file_path = ".\\Debug\\bathroom\\bathroom";
 
 Myobj veach(root_file_path + ".obj");
@@ -93,7 +95,7 @@ RadianceRGB shoot(vec x, vec w, double &px, int& step)
 	//求交
 	intersec_result rs = veach.closet_ray_intersect(x, w);
 	if (rs.isIntersec == false)
-		return RadianceRGB(0,0,0);
+		return RadianceRGB(0, 0, 0);
 
 	vec x1 = linear_interpolation(veach.get_vertexes_of_facet(rs.s, rs.f), 1.0 - rs.beta - rs.gamma, rs.beta, rs.gamma);
 	vec N = linear_interpolation(veach.get_normals_of_facet(rs.s, rs.f), 1.0 - rs.beta - rs.gamma, rs.beta, rs.gamma).normalized();
@@ -133,15 +135,22 @@ RadianceRGB shoot(vec x, vec w, double &px, int& step)
 		L = wo;
 		H = (L + V).normalized();
 
-		intersec_result rs1 = veach.closet_ray_intersect(x1, wo);
-		//如果光源点与x1之间有遮挡，则光路无效，radiance贡献为0
-		if((rs1.s != lightpoint.s) || (rs1.f != lightpoint.f))
+		//如果光源在当前facet的背面，则光路无效。
+		if (L.dot_product(N) < 0)
 		{
 			Ii = RadianceRGB(0, 0, 0);
 		}
-		else
-		{
-			Ii = lightpoint.I;
+		else {
+			intersec_result rs1 = veach.closet_ray_intersect(x1, wo);
+			//如果光源点与x1之间有遮挡，则光路无效，radiance贡献为0
+			if ((rs1.s != lightpoint.s) || (rs1.f != lightpoint.f))
+			{
+				Ii = RadianceRGB(0, 0, 0);
+			}
+			else
+			{
+				Ii = lightpoint.I;
+			}
 		}
 	}
 	else
@@ -215,8 +224,8 @@ RadianceRGB shoot(vec x, vec w, double &px, int& step)
 		v = v.normalized();
 
 		double M = cal_M(1.0 / (2 * std::numbers::pi * (x + y / (n + 1))), x, y, n, a1, a2, a3);
-
-		//累乘新方向的概率密度
+		
+		//累乘新方向的概率密度s
 		double prob = (x + y * pow(cos(theta), n)) * sin(theta) / (2 * std::numbers::pi * (x + y / (n + 1.0))) * M;
 		px *= prob;
 
@@ -249,6 +258,7 @@ RadianceRGB shoot(vec x, vec w, double &px, int& step)
 	}*/
 	return Ie;
 }
+RadianceRGB buffer[720][1280];
 int main()
 {
 
@@ -257,28 +267,88 @@ int main()
 	lights.gather_light_triangles(veach.reader);
 
 	//veach
-	//vec start = vec(28.2792, 5.2, 1.23612e-06);
-	//vec w = (vec(0.0, 2.8, 0.0) - start).normalized();
-	
-	//conerll
-	vec start = vec(278.0, 273.0, -800.0);
-	vec w = (vec(278.0, 273.0, -799.0) - start).normalized();
-	
+	vec start = vec(28.2792, 5.2, 1.23612e-06);
+	vec w = (vec(0.0, 2.8, 0.0) - start);
+
+	//cornell
+	//vec start = vec(278.0, 273.0, -800.0);
+	//vec w = (vec(278.0, 273.0, -799.0) - start).normalized();
+
 	//bathroom
 	//vec start = vec(0.0072405338287353516, 0.9124049544334412, -0.2275838851928711);
 	//vec w = (vec(-2.787562608718872, 0.9699121117591858, -2.6775901317596436) - start).normalized();
 
-	RadianceRGB sum;
+	/*RadianceRGB sum(0, 0, 0);
 	for (int i = 0; i < 100; i++)
 	{
 		std::cout << "Radiance: ";
 		double p = 1;
 		int step = 0;
-		//sum = sum + shoot(start, w, p,step);
+		//sum = sum + shoot(start, w, p, step);
 		//sum.print();
-		shoot(start, w, p, step).print();
-		std::cout << " p:" << p << " step:" << step<<std::endl;
+		RadianceRGB I = shoot(start, w, p, step) * (0.01 / p);
+		I.print();
+		sum = sum + I;
+		std::cout << " p:" << p << " step:" << step << std::endl;
 	}
-	//sum.print();
+	sum.print();
+	*/
+
+
+
+
+
+	double pixellen = tan(20.1143 / 180) * w.norm2() / 640;
+	vec eye = start;
+	vec N = w.normalized();
+	vec UP = vec(0, 1, 0);
+	vec V = N.cross_product(UP).normalized();
+	vec U = V.cross_product(N).normalized();
+	matrix3d T = matrix3d(U, V, N).transpose();
+
+	// 直接对显示缓冲区赋值
+	for (int i = 0; i < 720; i++)
+	{
+		printf("%d/720\n",i);
+		for (int j = 0; j < 1280; j++)
+		{
+			vec delta(-pixellen * (i - 359.5), pixellen * (j - 639.5), 0);
+			vec dir = (T * (delta + vec(0, 0, w.norm2())) - eye).normalized();
+
+			RadianceRGB sum(0, 0, 0);
+			for (int k = 0; k < 2; k++)
+			{
+				double p = 1;
+				int step = 0;
+				RadianceRGB I = shoot(eye, dir, p, step) * (0.5 / p);
+				sum = sum + I;
+			}
+			//std::cout << "ra: ";
+			//sum.print();
+			//std::cout << std::endl;
+			buffer[i][j] = sum;
+		}
+	}
+
+	// 初始化绘图窗口
+	initgraph(1024, 768);
+
+	// 获取指向显示缓冲区的指针
+	DWORD* pMem = GetImageBuffer();
+	for (int i = 0; i < 720; i++)
+	{
+		for (int j = 0; j < 1280; j++)
+		{
+			pMem[i * 1280 + j] = BGR(RGB(buffer[i][j].RGB[0], buffer[i][j].RGB[1], buffer[i][j].RGB[2]));
+		}
+	}
+	// 使显示缓冲区生效
+	FlushBatchDraw();
+
+	// 保存绘制的图像
+	//saveimage(_T("C:\\Users\\luotong\\Desktop\\test.bmp"));
+	//saveimage(_T(".\\test.bmp"));
+	system("pause");
+	closegraph();
 	return 0;
 }
