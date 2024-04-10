@@ -11,7 +11,10 @@ vec::vec(double a[])
 {
 	xyz[0] = a[0]; xyz[1] = a[1]; xyz[2] = a[2];
 }
-
+vec::vec(int a[])
+{
+	xyz[0] = a[0]; xyz[1] = a[1]; xyz[2] = a[2];
+}
 //重载等于运算符
 void vec::operator=(const vec& b)
 {

@@ -9,6 +9,7 @@ public:
 public:
 	vec(double a = 0, double b = 0, double c = 0);
 	vec(double a[]);
+	vec(int a[]);
 
 	void operator = (const vec& b);
 	bool operator == (const vec& b)const;

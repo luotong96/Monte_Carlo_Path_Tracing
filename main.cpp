@@ -11,6 +11,9 @@
 #include <chrono>
 #include "matrix3d.h"
 #include <graphics.h>		// 引用 EasyX 绘图库头文件
+#ifdef RGB
+#undef RGB
+#endif
 
 
 const std::string root_file_path = ".\\Debug\\veach-mis\\veach-mis";
@@ -102,7 +105,8 @@ RadianceRGB shoot(vec x, vec w, double &px, int& step)
 	//vec N = veach.get_unique_normal_of_facet(rs.s, rs.f);
 	if (N.dot_product(w * -1) < 0)
 	{
-		printf("95\n");
+		double tmp = N.dot_product(w * -1);
+		//printf("95\n");
 		return RadianceRGB(0, 0, 0);
 	}
 	
@@ -263,9 +267,11 @@ int main()
 {
 
 	veach.read();
+	//veach.loop();
+	 //return 0;
 	lights.read();
 	lights.gather_light_triangles(veach.reader);
-
+	
 	//veach
 	vec start = vec(28.2792, 5.2, 1.23612e-06);
 	vec w = (vec(0.0, 2.8, 0.0) - start);
@@ -277,6 +283,9 @@ int main()
 	//bathroom
 	//vec start = vec(0.0072405338287353516, 0.9124049544334412, -0.2275838851928711);
 	//vec w = (vec(-2.787562608718872, 0.9699121117591858, -2.6775901317596436) - start).normalized();
+
+	veach.cal_scene_boundingbox(start);
+	veach.meshing(100000);
 
 	/*RadianceRGB sum(0, 0, 0);
 	for (int i = 0; i < 100; i++)
@@ -294,7 +303,11 @@ int main()
 	sum.print();
 	*/
 
+	// 初始化绘图窗口
+	initgraph(1280, 720);
 
+	// 获取指向显示缓冲区的指针
+	DWORD* pMem = GetImageBuffer();
 
 
 
@@ -304,7 +317,8 @@ int main()
 	vec UP = vec(0, 1, 0);
 	vec V = N.cross_product(UP).normalized();
 	vec U = V.cross_product(N).normalized();
-	matrix3d T = matrix3d(U, V, N).transpose();
+	matrix3d T = matrix3d(U, V, N);
+//	vec dir2 = (T * (vec(0, 0, w.norm2()))).normalized();
 
 	// 直接对显示缓冲区赋值
 	for (int i = 0; i < 720; i++)
@@ -312,42 +326,35 @@ int main()
 		printf("%d/720\n",i);
 		for (int j = 0; j < 1280; j++)
 		{
+			printf("%d ", j);
 			vec delta(-pixellen * (i - 359.5), pixellen * (j - 639.5), 0);
-			vec dir = (T * (delta + vec(0, 0, w.norm2())) - eye).normalized();
+			vec dir = (T * (delta + vec(0, 0, w.norm2()))).normalized();
 
 			RadianceRGB sum(0, 0, 0);
-			for (int k = 0; k < 2; k++)
+			for (int k = 0; k < 10; k++)
 			{
 				double p = 1;
 				int step = 0;
-				RadianceRGB I = shoot(eye, dir, p, step) * (0.5 / p);
+				RadianceRGB I = shoot(eye, dir, p, step) * (0.1 / p);
 				sum = sum + I;
 			}
 			//std::cout << "ra: ";
 			//sum.print();
 			//std::cout << std::endl;
 			buffer[i][j] = sum;
+			//#define RGB(r,g,b)          ((COLORREF)(((BYTE)(r)|((WORD)((BYTE)(g))<<8))|(((DWORD)(BYTE)(b))<<16)))
+			pMem[i * 1280 + j] = BGR(((COLORREF)(((BYTE)(buffer[i][j].RGB[0]) | ((WORD)((BYTE)(buffer[i][j].RGB[1])) << 8)) | (((DWORD)(BYTE)(buffer[i][j].RGB[2])) << 16))));
 		}
+		FlushBatchDraw();
 	}
 
-	// 初始化绘图窗口
-	initgraph(1024, 768);
 
-	// 获取指向显示缓冲区的指针
-	DWORD* pMem = GetImageBuffer();
-	for (int i = 0; i < 720; i++)
-	{
-		for (int j = 0; j < 1280; j++)
-		{
-			pMem[i * 1280 + j] = BGR(RGB(buffer[i][j].RGB[0], buffer[i][j].RGB[1], buffer[i][j].RGB[2]));
-		}
-	}
 	// 使显示缓冲区生效
-	FlushBatchDraw();
+//	FlushBatchDraw();
 
 	// 保存绘制的图像
 	//saveimage(_T("C:\\Users\\luotong\\Desktop\\test.bmp"));
-	//saveimage(_T(".\\test.bmp"));
+	saveimage(_T(".\\test.bmp"));
 	system("pause");
 	closegraph();
 	return 0;
