@@ -91,12 +91,12 @@ inline double cal_M(double c2, double x, double y, double n, double a1, double a
 //      .   .
 //  w*   .x1
 //从x点沿着w方向射出光线，w为单位向量。到达x点并沿w方向射出的累积概率密度是px。返回值是从光源射入x的radiance。
-//递归向下求概率，回溯算radiance。
-RadianceRGB shoot(vec x, vec w, double &px, int& step)
+//递归向下求概率，回溯算radiance。xtri是x所属triangle
+RadianceRGB shoot(vec x, vec w, double &px, int& step, triangle xtri)
 {
 	step++;
 	//求交
-	intersec_result rs = veach.closet_ray_intersect(x, w);
+	intersec_result rs = veach.closet_ray_intersect(x, w, xtri);
 	if (rs.isIntersec == false)
 		return RadianceRGB(0, 0, 0);
 
@@ -106,7 +106,7 @@ RadianceRGB shoot(vec x, vec w, double &px, int& step)
 	if (N.dot_product(w * -1) < 0)
 	{
 		double tmp = N.dot_product(w * -1);
-		//printf("95\n");
+		printf("95\n");
 		return RadianceRGB(0, 0, 0);
 	}
 	
@@ -145,7 +145,7 @@ RadianceRGB shoot(vec x, vec w, double &px, int& step)
 			Ii = RadianceRGB(0, 0, 0);
 		}
 		else {
-			intersec_result rs1 = veach.closet_ray_intersect(x1, wo);
+			intersec_result rs1 = veach.closet_ray_intersect(x1, wo, triangle(rs.s,rs.f));
 			//如果光源点与x1之间有遮挡，则光路无效，radiance贡献为0
 			if ((rs1.s != lightpoint.s) || (rs1.f != lightpoint.f))
 			{
@@ -234,7 +234,7 @@ RadianceRGB shoot(vec x, vec w, double &px, int& step)
 		px *= prob;
 
 		//返回Radiance,有Russian Roulette，需要用1/q修正返回的能量
-		Ii = shoot(x1, v, px, step) * (1.0 / q);
+		Ii = shoot(x1, v, px, step,triangle(rs.s,rs.f)) * (1.0 / q);
 		
 		//光路反转，采样得到的v方向成为计算x1向x反射能量过程中的L方向。
 		L = v;
@@ -326,7 +326,7 @@ int main()
 		printf("%d/720\n",i);
 		for (int j = 0; j < 1280; j++)
 		{
-			printf("%d ", j);
+			//printf("%d ", j);
 			vec delta(-pixellen * (i - 359.5), pixellen * (j - 639.5), 0);
 			vec dir = (T * (delta + vec(0, 0, w.norm2()))).normalized();
 
@@ -335,7 +335,7 @@ int main()
 			{
 				double p = 1;
 				int step = 0;
-				RadianceRGB I = shoot(eye, dir, p, step) * (0.1 / p);
+				RadianceRGB I = shoot(eye, dir, p, step, triangle(-1, -1)) * (0.1 / p);
 				sum = sum + I;
 			}
 			//std::cout << "ra: ";

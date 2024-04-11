@@ -57,6 +57,10 @@ struct triangle
             return s < b.s;
         return f < b.f;
     }
+    bool operator==(const triangle& b)const
+    {
+        return (s == b.s) && (f == b.f);
+    }
 };
 class Myobj
 {
@@ -87,7 +91,7 @@ public:
     intersec_result intersect_with_triangle(vec ro, vec rd, size_t s, size_t f)const;
 
     //ro光线起点，rd光线方向，找最近相交三角形
-    intersec_result closet_ray_intersect(vec ro, vec rd)const;
+    intersec_result closet_ray_intersect(vec ro, vec rd, triangle rotri)const;
 
     //返回指定facet的三个顶点向量。序号为f的facet 属于序号为s的shape
     std::array<vec,3> get_vertexes_of_facet(size_t s, size_t f) const;

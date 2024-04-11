@@ -52,19 +52,19 @@ vec vec::operator *(double c)const
 }
 
 //向量长度，2范数
-double vec::norm2()const
+inline double vec::norm2()const
 {
 	return sqrt(xyz[0] * xyz[0] + xyz[1] * xyz[1] + xyz[2] * xyz[2]);
 }
 
-bool vec::isZero()const
+inline bool vec::isZero()const
 {
 	return norm2() < eps;
 }
 
 
 //向量叉积，直接用3阶行列式推出来即可。
-vec vec::cross_product(const vec & b)const
+inline vec vec::cross_product(const vec & b)const
 {
 	return vec(xyz[1] * b.xyz[2] - xyz[2] * b.xyz[1], xyz[2] * b.xyz[0] - xyz[0] * b.xyz[2], xyz[0] * b.xyz[1] - xyz[1] * b.xyz[0]);
 }
@@ -81,12 +81,12 @@ double vec::dot_product(const vec& b)const
 }
 
 //三阶行列式，等价于先做叉积，再做点积。
-double vec::determinant(const vec& a, const vec& b, const vec& c)
+inline double vec::determinant(const vec& a, const vec& b, const vec& c)
 {
 	return (a.cross_product(b)).dot_product(c);
 }
 
-vec vec::get_zero_vector()
+inline vec vec::get_zero_vector()
 {
 	return vec(0, 0, 0);
 }

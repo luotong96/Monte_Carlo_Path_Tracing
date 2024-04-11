@@ -137,8 +137,8 @@ void Myobj::meshing(int n0)
                 tinyobj::index_t idx = shapes[s].mesh.indices[3 * f + v];
                 for (int i = 0; i < 3; i++)
                 {
-                    xyz[i][0] = fmin(xyzmm[i][0], attrib.vertices[3 * size_t(idx.vertex_index) + i]);
-                    xyz[i][1] = fmax(xyzmm[i][0], attrib.vertices[3 * size_t(idx.vertex_index) + i]);
+                    xyz[i][0] = fmin(xyz[i][0], attrib.vertices[3 * size_t(idx.vertex_index) + i]);
+                    xyz[i][1] = fmax(xyz[i][1], attrib.vertices[3 * size_t(idx.vertex_index) + i]);
                 }
             }
             int xyzi[3][2];
@@ -212,7 +212,7 @@ intersec_result Myobj::closet_ray_intersect(vec ro, vec rd)const
 }
 */
 //ro光线起点，rd光线方向的单位向量
-intersec_result Myobj::closet_ray_intersect(vec ro, vec rd)const
+/*intersec_result Myobj::closet_ray_intersect(vec ro, vec rd)const
 {
     std::map<triangle, intersec_result> intersecMap;
 
@@ -222,7 +222,7 @@ intersec_result Myobj::closet_ray_intersect(vec ro, vec rd)const
     //ro = ro + rd * delta;
     //变换到网格坐标上，该网格的整数点坐标在像素块中心。
     vec xyz0 = (ro - vec(xyzmm[0][0], xyzmm[1][0], xyzmm[2][0])) * (1.0 / gridCellWidth) - vec(0.5, 0.5, 0.5);
-    vec abc = rd * (1.0 / gridCellWidth);
+    vec abc = (rd * (1.0 / gridCellWidth)).normalized();
     
     //网格整点坐标
     int xyz[3];
@@ -327,6 +327,151 @@ intersec_result Myobj::closet_ray_intersect(vec ro, vec rd)const
         }
         e = e - vec(sign[0] * same[0], sign[1] * same[1], sign[2] * same[2]);
         e = e + abc;
+    }
+    return ans;
+}
+*/
+intersec_result Myobj::closet_ray_intersect(vec ro, vec rd, triangle rotri)const
+{
+    vec xyz0 = (ro - vec(xyzmm[0][0], xyzmm[1][0], xyzmm[2][0])) * (1.0 / gridCellWidth);
+    vec abc = rd;
+
+    int xyz[3];
+    for (int i = 0; i < 3; i++)
+    {
+        xyz[i] = floor(xyz0.xyz[i]);
+    }
+
+    int sign[3];
+    for (int i = 0; i < 3; i++)
+    {
+        sign[i] = abc.xyz[i] < 0 ? -1 : 1;
+        if (fabs(abc.xyz[i]) < eps)
+        {
+            sign[i] = 0;
+        }
+    }
+    
+    //ts:触及对应维度网格边界的下一个t值。若sign[i]为0，不考虑那一维。
+    int nxyz[3];
+    double ts[3];
+    for (int i = 0; i < 3; i++)
+    {
+        if (sign[i])
+        {
+            //与最近的整数很接近
+            if (fabs(floor(xyz0.xyz[i]) - xyz0.xyz[i]) < eps)
+            {
+                nxyz[i] = xyz[i] + sign[i];
+            }
+            else
+            {
+                if (sign[i] > 0)
+                {
+                    nxyz[i] = (int)ceil(xyz0.xyz[i]);
+                }
+                else
+                {
+                    nxyz[i] = (int)floor(xyz0.xyz[i]);
+                }
+            }
+            ts[i] = (nxyz[i] - xyz0.xyz[i]) / abc.xyz[i];
+        }
+        else
+        {
+            nxyz[i] = -1;
+            ts[i] = DBL_MAX;
+        }
+    }
+
+    //整个场景的boundingbox边长
+    double len[3];
+    for (int i = 0; i < 3; i++)
+    {
+        len[i] = xyzmm[i][1] - xyzmm[i][0];
+    }
+
+    //求交结果暂存
+    std::map<triangle, intersec_result> intersecMap;
+
+    intersec_result ans(false, 0, 0, 0, 0, DBL_MAX);
+
+    bool reachbound = false;
+    while (1)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            //越过网格边界
+            if (xyz[i] < 0 || xyz[i] > (int)floor(len[i] / gridCellWidth) + 2)
+            {
+                reachbound = true;
+                break;
+            }
+        }
+        if (reachbound)
+            break;
+        //对当前xyz格子光线求交
+        for (auto& tri : triangleOfGrid[xyz[0]][xyz[1]][xyz[2]])
+        {
+            //防止自相交
+            if (tri == rotri)
+                continue;
+
+            if (intersecMap.find(tri) == intersecMap.end())
+            {
+                intersecMap[tri] = intersect_with_triangle(ro, rd, tri.s, tri.f);
+            }
+            intersec_result rs = intersecMap[tri];
+            if (rs.isIntersec)
+            {
+                bool outOfBox = false;
+                //交点所在格子编号
+                vec crosspoint = (ro + (rd * rs.t) - vec(xyzmm[0][0], xyzmm[1][0], xyzmm[2][0])) * (1.0 / gridCellWidth);
+                int rsxyz[3];
+                for (int i = 0; i < 3; i++)
+                {
+                    rsxyz[i] = (int)floor(crosspoint.xyz[i]);
+                    if (rsxyz[i] != xyz[i])
+                    {
+                        outOfBox = true;
+                        break;
+                    }
+                }
+                if (outOfBox)
+                    continue;
+                if (rs.t < ans.t)
+                {
+                    ans = rs;
+                }
+            }
+        }
+        if (ans.isIntersec)
+        {
+            return ans;
+        }
+        double t = DBL_MAX;
+        int ind = -1;
+        for (int i = 0; i < 3; i++)
+        {
+            if (ts[i] < t)
+            {
+                ind = i;
+                t = ts[i];
+            }
+        }
+        if (t == DBL_MAX)
+        {
+            printf("460!!!!\n");
+        }
+        for (int i = 0; i < 3; i++)
+        {
+            if (fabs(t - ts[i]) < eps)
+            {
+                xyz[i] += sign[i];
+                nxyz[i] += sign[i];
+                ts[i] = (nxyz[i] - xyz0.xyz[i]) / abc.xyz[i];
+            }
+        }
     }
     return ans;
 }
