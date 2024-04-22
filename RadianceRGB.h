@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
-
+#include <array>
+#include "BRDF.h"
 class RadianceRGB
 {
 public:
@@ -21,10 +22,16 @@ public:
 
 	//Radiance pairwise 乘法
 	RadianceRGB operator *(const RadianceRGB& b)const;
+	
+	//Radiance * BRDF
+	RadianceRGB operator *(const BRDF& b)const;
 
 	//返回RGB[0]+RGB[1]+RGB[2]
 	double sum();
 
 	void print();
+
+	//Radiance 到RGB的转换
+	std::array<int, 3> tone_mapping();
 };
 

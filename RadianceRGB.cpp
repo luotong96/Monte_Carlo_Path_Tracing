@@ -1,6 +1,7 @@
 #include "RadianceRGB.h"
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 
 RadianceRGB::RadianceRGB()
 {
@@ -40,6 +41,20 @@ RadianceRGB RadianceRGB::operator *(const RadianceRGB& b)const
 {
     return RadianceRGB(RGB[0] * b.RGB[0], RGB[1] * b.RGB[1], RGB[2] * b.RGB[2]);
 }
+RadianceRGB RadianceRGB::operator *(const BRDF& b)const
+{
+    return RadianceRGB(RGB[0] * b.RGB[0], RGB[1] * b.RGB[1], RGB[2] * b.RGB[2]);
+}
+
+std::array<int, 3> RadianceRGB::tone_mapping()
+{
+    std::array<int,3> rgb;
+    for (int i = 0; i < 3; i++)
+    {
+        rgb[i] = std::max(std::min((int)floor(RGB[i] + 0.5), 255), 0);
+    }
+    return rgb;
+}
 
 
 double RadianceRGB::sum()
@@ -51,3 +66,5 @@ void RadianceRGB::print()
 {
     std::cout << RGB[0] << " " << RGB[1] << " " << RGB[2];
 }
+
+

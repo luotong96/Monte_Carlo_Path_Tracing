@@ -66,6 +66,8 @@ public:
 	//光源mtlname->light_triangle的映射。用于收集存储所有光源三角面片的信息。
 	std::map<std::string, std::vector<lightTriangle> > lightsTriangles;
 
+	//三角面片是否是光源
+	std::map<triangle, RadianceRGB> islight;
 public:
 	Mylight(std::string inputfile);
 	//从xml中读取光源radiance数据

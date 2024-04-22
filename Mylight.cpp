@@ -49,7 +49,8 @@ void Mylight::gather_light_triangles(const tinyobj::ObjReader& reader)
                 //如果该面片的材质名称是光源的材质名称
                 if (materials.at(shapes[s].mesh.material_ids[f]).name == it->first)
                 {
-
+                    islight[triangle(s, f)] = lightsRadiance[it->first];
+                    
                     //算三角面片的面积
                     vec abc[3];
                     for (size_t v = 0; v < 3; v++) {

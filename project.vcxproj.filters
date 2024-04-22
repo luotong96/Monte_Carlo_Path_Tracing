@@ -36,6 +36,9 @@
     <ClCompile Include="matrix3d.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BRDF.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tiny_obj_loader.h">
@@ -63,6 +66,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="matrix3d.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BRDF.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
