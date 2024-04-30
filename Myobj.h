@@ -3,6 +3,8 @@
 #include "tiny_obj_loader.h"
 #include "vec.h"
 #include <array>
+#include "RadianceRGB.h"
+
 
 //光线求交结果
 struct intersec_result
@@ -77,6 +79,15 @@ public:
     double xyzmm[3][2];
     //单个网格正方形cell的宽度
     double gridCellWidth;
+
+    //存储三角形的唯一法向量
+    std::map<triangle, vec > triangleUniqueNormal;
+
+    //存储三角形三个顶点向量
+    std::map<triangle, std::array<vec, 3> > triangleVertex;
+
+    //存储三角形三个顶点法向
+    std::map<triangle, std::array<vec, 3> > triangleVertexNormal;
 public:
     Myobj(std::string inputfile);
     void read();
@@ -88,18 +99,21 @@ public:
     void meshing(int c);
 
     //ro光线起点，rd光线单位方向,一条光线与一个三角形相交
-    intersec_result intersect_with_triangle(vec ro, vec rd, size_t s, size_t f)const;
+    intersec_result intersect_with_triangle(vec ro, vec rd, size_t s, size_t f);
 
     //ro光线起点，rd光线方向，找最近相交三角形
-    intersec_result closet_ray_intersect(vec ro, vec rd, triangle rotri)const;
+    intersec_result closet_ray_intersect(vec ro, vec rd, triangle rotri);
+
+    //ro光线起点，rd光线方向，找最近相交的光源三角形
+    intersec_result closet_ray_intersect_light_triangle(vec ro, vec rd, triangle rotri, std::map<triangle, RadianceRGB >& islight);
 
     //返回指定facet的三个顶点向量。序号为f的facet 属于序号为s的shape
-    std::array<vec,3> get_vertexes_of_facet(size_t s, size_t f) const;
+    std::array<vec,3> get_vertexes_of_facet(size_t s, size_t f);
 
     //返回指定facet的三个顶点法向向量。序号为f的facet 属于序号为s的shape
-    std::array<vec,3> get_normals_of_facet(size_t s, size_t f) const;
+    std::array<vec,3> get_normals_of_facet(size_t s, size_t f);
 
     //计算并返回指定facet的唯一真实面法向量
-    vec get_unique_normal_of_facet(size_t s, size_t f)const;
+    vec get_unique_normal_of_facet(size_t s, size_t f);
 };
 

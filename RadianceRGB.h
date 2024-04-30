@@ -32,6 +32,6 @@ public:
 	void print();
 
 	//Radiance µ½RGBµÄ×ª»»
-	std::array<int, 3> tone_mapping();
+	std::array<int, 3> tone_mapping(double maxRadiance, double gamma);
 };
 

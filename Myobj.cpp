@@ -162,7 +162,7 @@ void Myobj::meshing(int n0)
 }
 
 //一条光线与一个三角形相交
-intersec_result Myobj::intersect_with_triangle(vec ro, vec rd, size_t s,size_t f)const
+intersec_result Myobj::intersect_with_triangle(vec ro, vec rd, size_t s,size_t f)
 {
     std::array<vec, 3> abc = get_vertexes_of_facet(s, f);
     vec a = abc[0];
@@ -331,7 +331,7 @@ intersec_result Myobj::closet_ray_intersect(vec ro, vec rd)const
     return ans;
 }
 */
-intersec_result Myobj::closet_ray_intersect(vec ro, vec rd, triangle rotri)const
+intersec_result Myobj::closet_ray_intersect(vec ro, vec rd, triangle rotri)
 {
     vec xyz0 = (ro - vec(xyzmm[0][0], xyzmm[1][0], xyzmm[2][0])) * (1.0 / gridCellWidth);
     vec abc = rd;
@@ -476,9 +476,164 @@ intersec_result Myobj::closet_ray_intersect(vec ro, vec rd, triangle rotri)const
     return ans;
 }
 
-//返回指定facet的三个顶点向量。序号为f的facet 属于序号为s的shape
-std::array<vec, 3> Myobj::get_vertexes_of_facet(size_t s, size_t f) const
+intersec_result Myobj::closet_ray_intersect_light_triangle(vec ro, vec rd, triangle rotri, std::map<triangle, RadianceRGB >& islight)
 {
+    vec xyz0 = (ro - vec(xyzmm[0][0], xyzmm[1][0], xyzmm[2][0])) * (1.0 / gridCellWidth);
+    vec abc = rd;
+
+    int xyz[3];
+    for (int i = 0; i < 3; i++)
+    {
+        xyz[i] = floor(xyz0.xyz[i]);
+    }
+
+    int sign[3];
+    for (int i = 0; i < 3; i++)
+    {
+        sign[i] = abc.xyz[i] < 0 ? -1 : 1;
+        if (fabs(abc.xyz[i]) < eps)
+        {
+            sign[i] = 0;
+        }
+    }
+
+    //ts:触及对应维度网格边界的下一个t值。若sign[i]为0，不考虑那一维。
+    int nxyz[3];
+    double ts[3];
+    for (int i = 0; i < 3; i++)
+    {
+        if (sign[i])
+        {
+            //与最近的整数很接近
+            if (fabs(floor(xyz0.xyz[i]) - xyz0.xyz[i]) < eps)
+            {
+                nxyz[i] = xyz[i] + sign[i];
+            }
+            else
+            {
+                if (sign[i] > 0)
+                {
+                    nxyz[i] = (int)ceil(xyz0.xyz[i]);
+                }
+                else
+                {
+                    nxyz[i] = (int)floor(xyz0.xyz[i]);
+                }
+            }
+            ts[i] = (nxyz[i] - xyz0.xyz[i]) / abc.xyz[i];
+        }
+        else
+        {
+            nxyz[i] = -1;
+            ts[i] = DBL_MAX;
+        }
+    }
+
+    //整个场景的boundingbox边长
+    double len[3];
+    for (int i = 0; i < 3; i++)
+    {
+        len[i] = xyzmm[i][1] - xyzmm[i][0];
+    }
+
+    //求交结果暂存
+    std::map<triangle, intersec_result> intersecMap;
+
+    intersec_result ans(false, 0, 0, 0, 0, DBL_MAX);
+
+    bool reachbound = false;
+    while (1)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            //越过网格边界
+            if (xyz[i] < 0 || xyz[i] > (int)floor(len[i] / gridCellWidth) + 2)
+            {
+                reachbound = true;
+                break;
+            }
+        }
+        if (reachbound)
+            break;
+        //对当前xyz格子光线求交
+        for (auto& tri : triangleOfGrid[xyz[0]][xyz[1]][xyz[2]])
+        {
+            //非光源三角形，跳过
+            if (islight.find(tri) == islight.end())
+                continue;
+            //防止自相交
+            if (tri == rotri)
+                continue;
+
+            if (intersecMap.find(tri) == intersecMap.end())
+            {
+                intersecMap[tri] = intersect_with_triangle(ro, rd, tri.s, tri.f);
+            }
+            intersec_result rs = intersecMap[tri];
+            if (rs.isIntersec)
+            {
+                bool outOfBox = false;
+                //交点所在格子编号
+                vec crosspoint = (ro + (rd * rs.t) - vec(xyzmm[0][0], xyzmm[1][0], xyzmm[2][0])) * (1.0 / gridCellWidth);
+                int rsxyz[3];
+                for (int i = 0; i < 3; i++)
+                {
+                    rsxyz[i] = (int)floor(crosspoint.xyz[i]);
+                    if (rsxyz[i] != xyz[i])
+                    {
+                        outOfBox = true;
+                        break;
+                    }
+                }
+                if (outOfBox)
+                    continue;
+                if (rs.t < ans.t)
+                {
+                    ans = rs;
+                }
+            }
+        }
+        if (ans.isIntersec)
+        {
+            return ans;
+        }
+        double t = DBL_MAX;
+        int ind = -1;
+        for (int i = 0; i < 3; i++)
+        {
+            if (ts[i] < t)
+            {
+                ind = i;
+                t = ts[i];
+            }
+        }
+        if (t == DBL_MAX)
+        {
+            printf("460!!!!\n");
+        }
+        for (int i = 0; i < 3; i++)
+        {
+            if (fabs(t - ts[i]) < eps)
+            {
+                xyz[i] += sign[i];
+                nxyz[i] += sign[i];
+                ts[i] = (nxyz[i] - xyz0.xyz[i]) / abc.xyz[i];
+            }
+        }
+    }
+    return ans;
+}
+
+
+//返回指定facet的三个顶点向量。序号为f的facet 属于序号为s的shape
+std::array<vec, 3> Myobj::get_vertexes_of_facet(size_t s, size_t f)
+{
+    triangle tri(s, f);
+    if (triangleVertex.find(tri) != triangleVertex.end())
+    {
+        return triangleVertex.at(tri);
+    }
+
     std::array<vec, 3> points;
     
     auto& attrib = reader.GetAttrib();
@@ -493,13 +648,19 @@ std::array<vec, 3> Myobj::get_vertexes_of_facet(size_t s, size_t f) const
         tinyobj::real_t vz = attrib.vertices[3 * size_t(idx.vertex_index) + 2];
         points[i] = vec(vx, vy, vz);
     }
-
+    triangleVertex[tri] = points;
     return points;
 }
 
 //返回指定facet的三个顶点法向向量。序号为f的facet 属于序号为s的shape
-std::array<vec, 3> Myobj::get_normals_of_facet(size_t s, size_t f) const
+std::array<vec, 3> Myobj::get_normals_of_facet(size_t s, size_t f)
 {
+    triangle tri(s, f);
+    if (triangleVertexNormal.find(tri) != triangleVertexNormal.end())
+    {
+        return triangleVertexNormal.at(tri);
+    }
+
 
     std::array<vec, 3> normals;
 
@@ -515,12 +676,17 @@ std::array<vec, 3> Myobj::get_normals_of_facet(size_t s, size_t f) const
         tinyobj::real_t vz = attrib.normals[3 * size_t(idx.normal_index) + 2];
         normals[i] = vec(vx, vy, vz);
     }
-
+    triangleVertexNormal[tri] = normals;
     return normals;
 }
 
-vec Myobj::get_unique_normal_of_facet(size_t s, size_t f)const
+vec Myobj::get_unique_normal_of_facet(size_t s, size_t f)
 {
+    triangle tri = triangle(s, f);
+    if (triangleUniqueNormal.find(tri) != triangleUniqueNormal.end())
+    {
+        return triangleUniqueNormal.at(tri);
+    }
     std::array<vec, 3> abc = get_vertexes_of_facet(s, f);
     vec a = abc[0];
     vec b = abc[1];
@@ -535,10 +701,12 @@ vec Myobj::get_unique_normal_of_facet(size_t s, size_t f)const
     vec nr = n * -1;
     double w = n.dot_product(na) + n.dot_product(nb) + n.dot_product(nc);
     double wr = nr.dot_product(na) + nr.dot_product(nb) + nr.dot_product(nc);
-    return n;
+    //return n;
     if (w > wr)
     {
+        triangleUniqueNormal[tri] = n;
         return n;
     }
+    triangleUniqueNormal[tri] = nr;
     return nr;
 }

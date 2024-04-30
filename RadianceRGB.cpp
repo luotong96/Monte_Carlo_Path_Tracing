@@ -46,12 +46,22 @@ RadianceRGB RadianceRGB::operator *(const BRDF& b)const
     return RadianceRGB(RGB[0] * b.RGB[0], RGB[1] * b.RGB[1], RGB[2] * b.RGB[2]);
 }
 
-std::array<int, 3> RadianceRGB::tone_mapping()
+//maxRadiance:环境中单点Radiance的上界
+//gamma：gamma compression 的参数
+std::array<int, 3> RadianceRGB::tone_mapping(double maxRadiance,double gamma)
 {
     std::array<int,3> rgb;
-    for (int i = 0; i < 3; i++)
+    
+    /*for (int i = 0; i < 3; i++)
     {
         rgb[i] = std::max(std::min((int)floor(RGB[i] + 0.5), 255), 0);
+    }*/
+    double A = pow(maxRadiance, -gamma);
+    for (int i = 0; i < 3; i++)
+    {
+        double r = A* pow(RGB[i], gamma);
+        //r = fmin(fmax(r, 0), 1);
+        rgb[i] = std::max(std::min((int)floor(r * 255 + 0.5), 255), 0);
     }
     return rgb;
 }

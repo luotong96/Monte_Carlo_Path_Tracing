@@ -263,7 +263,8 @@ RadianceRGB shoot(vec x, vec w, double &px, int& step, triangle xtri)
 	return Ie;
 }
 
-//point 相交点
+//point 相交点,wo视线方向
+//自发光+直接光照光源采样+间接光照brdf采样
 RadianceRGB shade(intersec_result point, vec wo)
 {
 
@@ -271,7 +272,7 @@ RadianceRGB shade(intersec_result point, vec wo)
 	vec p = linear_interpolation(veach.get_vertexes_of_facet(point.s, point.f), 1.0 - point.beta - point.gamma, point.beta, point.gamma);
 	vec N = linear_interpolation(veach.get_normals_of_facet(point.s, point.f), 1.0 - point.beta - point.gamma, point.beta, point.gamma).normalized();
 	
-	//入射光线交在方向负半空间
+	//入射光线交在法向负半空间
 	if (N.dot_product(wo) < 0)
 	{
 		return RadianceRGB(0, 0, 0);
@@ -293,6 +294,8 @@ RadianceRGB shade(intersec_result point, vec wo)
 	// L_dir 直接光照的radiance
 	RadianceRGB L_dir;
 	sampledLightPoint lightpoint = lights.select_a_point_from_lights(veach);
+	//sampledLightPoint lightpoint = lights.select_a_point_from_lights_spherical_triangle(p, N, veach);
+
 	vec x1 = lightpoint.coord;
 	//光源法向量
 	vec n1 = veach.get_unique_normal_of_facet(lightpoint.s, lightpoint.f);
@@ -307,7 +310,7 @@ RadianceRGB shade(intersec_result point, vec wo)
 		if (rstmp.isIntersec && rstmp.s == lightpoint.s && rstmp.f == lightpoint.f)
 		{
 			BRDF brdf = BRDF::get_brdf_phong(N, wl, wo, vec(mtl.diffuse[0], mtl.diffuse[1], mtl.diffuse[2]), vec(mtl.specular[0], mtl.specular[1], mtl.specular[2]), mtl.shininess);
-			L_dir = lightpoint.I * brdf * (wl.dot_product(N) * (wl * -1).dot_product(n1) / wl.dot_product(wl) / lightpoint.prob);
+			L_dir = lightpoint.I * brdf * (wl.dot_product(N) * (wl * -1).dot_product(n1) / (x1-p).dot_product(x1-p) / lightpoint.prob);
 		}
 	}
 
@@ -322,11 +325,11 @@ RadianceRGB shade(intersec_result point, vec wo)
 	double ksi = distribution(generator);
 
 	if (ksi > P_RR)
-		return emit + L_dir + L_indir;
+		return L_dir + L_indir;
 
 	sampledRay wi = BRDF::sample_from_phong(N, wo, vec(mtl.diffuse[0], mtl.diffuse[1], mtl.diffuse[2]), vec(mtl.specular[0], mtl.specular[1], mtl.specular[2]), mtl.shininess);
 	if (wi.dir.dot_product(N) < 0)
-		return emit + L_dir + L_indir;
+		return L_dir + L_indir;
 
 	intersec_result rsq = veach.closet_ray_intersect(p, wi.dir, triangle(point.s, point.f));
 
@@ -336,7 +339,157 @@ RadianceRGB shade(intersec_result point, vec wo)
 		BRDF brdf = BRDF::get_brdf_phong(N, wi.dir, wo, vec(mtl.diffuse[0], mtl.diffuse[1], mtl.diffuse[2]), vec(mtl.specular[0], mtl.specular[1], mtl.specular[2]), mtl.shininess);
 		L_indir = shade(rsq, wi.dir * -1) * brdf * (wi.dir.dot_product(N) / wi.pdf / P_RR);
 	}
-	return emit + L_dir + L_indir;
+	return L_dir + L_indir;
+}
+
+//point 相交点,wo视线方向
+//自发光+brdf光线采样
+RadianceRGB shade_with_brdf(intersec_result point, vec wo)
+{
+	//当前点p,当前facet法向N
+	vec p = linear_interpolation(veach.get_vertexes_of_facet(point.s, point.f), 1.0 - point.beta - point.gamma, point.beta, point.gamma);
+	vec N = linear_interpolation(veach.get_normals_of_facet(point.s, point.f), 1.0 - point.beta - point.gamma, point.beta, point.gamma).normalized();
+
+	//入射光线交在法向负半空间
+	if (N.dot_product(wo) < 0)
+	{
+		return RadianceRGB(0, 0, 0);
+	}
+
+	//光源只考虑自发光
+	RadianceRGB emit;
+	if (lights.islight.find(triangle(point.s, point.f)) != lights.islight.end())
+	{
+		emit = lights.islight[triangle(point.s, point.f)];
+		return emit;
+	}
+
+
+	//当前材质
+	tinyobj::material_t mtl = veach.reader.GetMaterials().at(veach.reader.GetShapes().at(point.s).mesh.material_ids[point.f]);
+
+	//光照，初始为0
+	RadianceRGB L;
+	//俄罗斯轮盘继续的概率
+	double P_RR = 0.8;
+
+	unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
+	std::default_random_engine generator(seed1);
+	std::uniform_real_distribution<double> distribution(0.0, 1.0);
+	double ksi = distribution(generator);
+
+	if (ksi > P_RR)
+		return  L;
+
+	sampledRay wi = BRDF::sample_from_phong(N, wo, vec(mtl.diffuse[0], mtl.diffuse[1], mtl.diffuse[2]), vec(mtl.specular[0], mtl.specular[1], mtl.specular[2]), mtl.shininess);
+	if (wi.dir.dot_product(N) < 0)
+		return L;
+
+	intersec_result rsq = veach.closet_ray_intersect(p, wi.dir, triangle(point.s, point.f));
+
+	//与场景相交。
+	if (rsq.isIntersec)
+	{
+		BRDF brdf = BRDF::get_brdf_phong(N, wi.dir, wo, vec(mtl.diffuse[0], mtl.diffuse[1], mtl.diffuse[2]), vec(mtl.specular[0], mtl.specular[1], mtl.specular[2]), mtl.shininess);
+		L = shade_with_brdf(rsq, wi.dir * -1) * brdf * (wi.dir.dot_product(N) / wi.pdf / P_RR);
+	}
+	return L;
+
+}
+
+//Multiple Importance Sampling
+RadianceRGB shade_with_mis(intersec_result point, vec wo)
+{
+
+	//当前点p,当前facet法向N
+	vec p = linear_interpolation(veach.get_vertexes_of_facet(point.s, point.f), 1.0 - point.beta - point.gamma, point.beta, point.gamma);
+	vec N = linear_interpolation(veach.get_normals_of_facet(point.s, point.f), 1.0 - point.beta - point.gamma, point.beta, point.gamma).normalized();
+
+	//反射光线交在法向负半空间
+	if (N.dot_product(wo) < 0)
+	{
+		return RadianceRGB(0, 0, 0);
+	}
+
+	//光源只考虑自发光
+	RadianceRGB emit;
+	if (lights.islight.find(triangle(point.s, point.f)) != lights.islight.end())
+	{
+		emit = lights.islight[triangle(point.s, point.f)];
+		return emit;
+	}
+
+
+	//当前材质
+	tinyobj::material_t mtl = veach.reader.GetMaterials().at(veach.reader.GetShapes().at(point.s).mesh.material_ids[point.f]);
+
+
+	//俄罗斯轮盘继续的概率
+	double P_RR = 0.6;
+
+	unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
+	std::default_random_engine generator(seed1);
+	std::uniform_real_distribution<double> distribution(0.0, 1.0);
+	double ksi = distribution(generator);
+
+	if (ksi > P_RR)
+		return RadianceRGB();
+
+
+	// 光源采样的radiance Contribution
+	RadianceRGB L_light;
+
+	lights.prepared_for_lights_spherical_triangle_sampling(p, N, veach);
+	sampledLightPoint lightpoint = lights.lights_spherical_triangle_sampling(p, N, veach);
+
+	vec x1 = lightpoint.coord;
+	//光源法向量
+	vec n1 = veach.get_unique_normal_of_facet(lightpoint.s, lightpoint.f);
+	//指向光源的入射方向
+	vec wl = (x1 - p).normalized();
+
+	//光线在N的正半平面
+	if (wl.dot_product(N) > 0)
+	{
+		intersec_result rstmp = veach.closet_ray_intersect(p, wl, triangle(point.s, point.f));
+		//当前点到光源中间无遮挡
+		if (rstmp.isIntersec)
+		{
+			BRDF brdf = BRDF::get_brdf_phong(N, wl, wo, vec(mtl.diffuse[0], mtl.diffuse[1], mtl.diffuse[2]), vec(mtl.specular[0], mtl.specular[1], mtl.specular[2]), mtl.shininess);
+			
+			//当前光线采样出的方向wl在brdf采样下的概率密度
+			double phongPdf = BRDF::eval_sample_from_phong_pdf(N, wl, wo, vec(mtl.diffuse[0], mtl.diffuse[1], mtl.diffuse[2]), vec(mtl.specular[0], mtl.specular[1], mtl.specular[2]), mtl.shininess);
+			//注意结尾的MIS
+			L_light = shade_with_mis(rstmp, wl * -1) * brdf * (wl.dot_product(N) / (lightpoint.prob + phongPdf) / P_RR);
+		}
+	}
+
+	//来自brdf采样的光线contribution
+	RadianceRGB L_brdf;
+	
+	sampledRay wi = BRDF::sample_from_phong(N, wo, vec(mtl.diffuse[0], mtl.diffuse[1], mtl.diffuse[2]), vec(mtl.specular[0], mtl.specular[1], mtl.specular[2]), mtl.shininess);
+	if (wi.dir.dot_product(N) < 0)
+		return L_light + L_brdf;
+
+	intersec_result rsq = veach.closet_ray_intersect(p, wi.dir, triangle(point.s, point.f));
+
+	//相交
+	if (rsq.isIntersec)
+	{
+		BRDF brdf = BRDF::get_brdf_phong(N, wi.dir, wo, vec(mtl.diffuse[0], mtl.diffuse[1], mtl.diffuse[2]), vec(mtl.specular[0], mtl.specular[1], mtl.specular[2]), mtl.shininess);
+		
+		//wi在spherical triangle光线采样下的概率密度
+		double light_pdf;
+		intersec_result rs = veach.closet_ray_intersect_light_triangle(p, wi.dir, triangle(point.s, point.f), lights.islight);
+		//若与光源三角形不相交，则概率密度为0
+		if (rs.isIntersec)
+			light_pdf = lights.eval_spherical_triangle_sampling_pdf(triangle(rs.s, rs.f), veach);
+		else
+			light_pdf = 0;
+
+		L_brdf = shade_with_mis(rsq, wi.dir * -1) * brdf * (wi.dir.dot_product(N) / (wi.pdf + light_pdf) / P_RR);
+	}
+	return L_light + L_brdf;
 }
 
 RadianceRGB buffer[720][1280];
@@ -352,7 +505,8 @@ int main()
 	//veach
 	vec start = vec(28.2792, 5.2, 1.23612e-06);
 	vec w = (vec(0.0, 2.8, 0.0) - start);
-
+	//start = start - w;
+	//w = w * 2;
 	//cornell
 	//vec start = vec(278.0, 273.0, -800.0);
 	//vec w = (vec(278.0, 273.0, -799.0) - start).normalized();
@@ -386,7 +540,7 @@ int main()
 	// 获取指向显示缓冲区的指针
 	DWORD* pMem = GetImageBuffer();
 
-
+	
 
 	//double pixellen = tan(20.1143 / 180) * w.norm2() / 640;
 	double pixellen = tan(20.1143 / 360) * w.norm2() / 360;
@@ -415,9 +569,9 @@ int main()
 				int step = 0;
 				//RadianceRGB I = shoot(eye, dir, p, step, triangle(-1, -1)) * (0.01 / p);
 				intersec_result rs = veach.closet_ray_intersect(eye, dir, triangle(-1, -1));
-				if (rs.isIntersec)
+				if (rs.isIntersec) 
 				{
-					RadianceRGB I = shade(rs, dir * -1) * 0.1;
+					RadianceRGB I = shade_with_mis(rs, dir * -1) * 0.1;
 					sum = sum + I;
 				}
 			}
@@ -425,7 +579,7 @@ int main()
 			//sum.print();
 			//std::cout << std::endl;
 			buffer[i][j] = sum;
-			std::array<int, 3> rgbi = sum.tone_mapping();
+			std::array<int, 3> rgbi = sum.tone_mapping(380, 0.25);
 			//#define RGB(r,g,b)          ((COLORREF)(((BYTE)(r)|((WORD)((BYTE)(g))<<8))|(((DWORD)(BYTE)(b))<<16)))
 			pMem[i * 1280 + j] = BGR(((COLORREF)(((BYTE)(rgbi[0]) | ((WORD)((BYTE)(rgbi[1])) << 8)) | (((DWORD)(BYTE)(rgbi[2])) << 16))));
 		}
@@ -438,7 +592,7 @@ int main()
 
 	// 保存绘制的图像
 	//saveimage(_T("C:\\Users\\luotong\\Desktop\\test.bmp"));
-	saveimage(_T(".\\test2.bmp"));
+	saveimage(_T(".\\test.bmp"));
 	system("pause");
 	closegraph();
 	return 0;
