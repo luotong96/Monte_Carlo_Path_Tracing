@@ -324,6 +324,7 @@ void Mylight::prepared_for_lights_spherical_triangle_sampling(vec x1, vec n, Myo
     sphericalTriangles.clear();
     weights.clear();
     weights_sum = 0;
+    indiceMap.clear();
 
     for (auto it = lightsTriangles.begin(); it != lightsTriangles.end(); ++it)
     {
@@ -424,7 +425,7 @@ sampledLightPoint Mylight::lights_spherical_triangle_sampling(vec x1, vec n, Myo
 {
     //总权值太小，退出。
     if (sphericalTriangles.size() == 0 || weights.size() == 0 || fabs(weights_sum) < eps)
-    {
+    {   
         return sampledLightPoint(0, 0, n * -1 + x1, RadianceRGB(), 1);
     }
 
@@ -484,5 +485,9 @@ double Mylight::eval_spherical_triangle_sampling_pdf(triangle tri, Myobj& myobj)
 {
     if (indiceMap.find(tri) == indiceMap.end())
         return 0;
+
+    if (fabs(weights_sum) < eps)
+        return 0;
+    
     return sphericalTriangles.at(indiceMap.at(tri)).L.sum() / weights_sum;
 }
