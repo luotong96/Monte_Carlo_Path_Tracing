@@ -85,6 +85,7 @@ inline double cal_M(double c2, double x, double y, double n, double a1, double a
 	return 1.0 / (1 - c2 * sum);
 }
 
+//最新：shoot函数是失败的设计，无法正确运行，成功的设计在shade函数
 //Path tracing，由摄像头发射光线。
 //wi* x        .x2 wo*
 //     .      .

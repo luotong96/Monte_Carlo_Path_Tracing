@@ -111,7 +111,7 @@ public:
 	std::map<triangle, RadianceRGB > islight;
 
 
-//存储Spherical triangle sampling的初始数据
+//存储Spherical triangle sampling的中间数据
 	std::vector<projectedSphericalTriangle> sphericalTriangles;
 	//具体选择某一个三角形光源的权重，等于其在当前点的投影面积*Radiance
 	std::vector<double> weights;

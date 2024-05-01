@@ -2,44 +2,44 @@
 
 Monte_Carlo_Path_Tracing for CG course 2023 zju
 
+本次实验所有内容由本人独立完成。
+
 #### 一、渲染方程
 
 1. 由入射光线方向$$\omega_i$$​的视角
    $$
-   L_o(p,\omega_o)=L_e(p,\omega_o)+\int_{\Omega^+}{L_i(p,\omega_i)f_r(p,\omega_i,\omega_o)(n \cdot \omega_i)d\omega_i}\tag{1}
+   L_o(p,\omega_o)=L_e(p,\omega_o)+\int_{\Omega^+}{L_i(p,\omega_i)f_r(p,\omega_i,\omega_o)(n \cdot \omega_i)d\omega_i}\tag{1}\label{1}
    $$
    
 2. 由光源平面采样点$\mathbf{x^\prime}$的视角
    $$
-   \begin{eqnarray} L_o(x,\omega_o) &=& \int_{\Omega^+}{L_i(x,\omega_i)f_r(x,\omega_i,\omega_o)cos\theta d\omega_i} \nonumber \\                                  &=& \int_A{L_e(\mathbf{x^\prime}\rightarrow\mathbf{x})f_r(x,\omega_i,\omega_o)}\frac{cos\theta cos\theta^{\prime}}{\Vert \mathbf{x^{\prime}}-\mathbf{x}\Vert^2}dA \tag{2} \end{eqnarray}
+   \begin{eqnarray} L_o(x,\omega_o) &=& \int_{\Omega^+}{L_i(x,\omega_i)f_r(x,\omega_i,\omega_o)cos\theta d\omega_i} \nonumber \\                                  &=& \int_A{L_e(\mathbf{x^\prime}\rightarrow\mathbf{x})f_r(x,\omega_i,\omega_o)}\frac{cos\theta cos\theta^{\prime}}{\Vert \mathbf{x^{\prime}}-\mathbf{x}\Vert^2}dA \tag{2} \label{2} \end{eqnarray}
    $$
    <img src="C:\Users\luotong\Desktop\图形学\exp2汇总\image-20240430124916283.png" alt="image-20240430124916283" style="zoom:50%;" />
 
    以上图片及公式部分参考于Games101课程[^1]
 
-3. 
-
 #### 二、Phong模型的brdf函数
 
 ​	
 $$
-\begin{eqnarray} f_r(\mathbf{x}, \omega_i, \omega_r) &=& f_{r,d}(\mathbf{x}, \omega_i, \omega_r) + f_{r,s}(\mathbf{x}, \omega_i, \omega_r) \nonumber \\ &=& \rho_d \frac{1}{\pi} + \rho_s \frac{n+1}{2\pi}\cos^n \alpha \tag{3} \end{eqnarray}
+\begin{eqnarray} f_r(\mathbf{x}, \omega_i, \omega_r) &=& f_{r,d}(\mathbf{x}, \omega_i, \omega_r) + f_{r,s}(\mathbf{x}, \omega_i, \omega_r) \nonumber \\ &=& \rho_d \frac{1}{\pi} + \rho_s \frac{n+1}{2\pi}\cos^n \alpha \tag{3}\label{3} \end{eqnarray}
 $$
 
-式$(3)$参考于[^2]
+式$\eqref{3}$参考于[^2]
 
 - $\rho_d$是diffuse反射系数，$\rho_s$是specular反射系数，$\alpha$是$\omega_r$的完美镜面反射$R$与入射光线$\omega_i$之间的夹角，$n$​​是Phong模型exponent参数（shiness）
 - 注意：$\theta>\frac{\pi}{2}$时，第一项会取$0$。$\alpha>\frac{\pi}{2}$时，第二项会取$0$。
 
 #### 三、光线采样方案：
 
-为了采用MonteCarlo算法求式$(2)$的积分，需要对半球面积分域$\Omega^+$进行光线采样。为使MonteCarlo积分估计的方差较小，采样方法的概率密度函数形式需要尽可能与被积函数形式一致。而式$(2)$的被积函数可划分为三项的乘积：光源项$L_i(x,\omega_i)$，brdf项$f_r(x,\omega_i,\omega_o)$，几何项$cos\theta$（或者$\frac{cos\theta cos\theta^{\prime}}{\Vert x^{\prime}-x^2\Vert}$​）。因此可以分别以光源，brdf为光线采样的概率密度函数基准。
+为了采用MonteCarlo算法求式$\eqref{2}$的积分，需要对半球面积分域$\Omega^+$进行光线采样。为使MonteCarlo积分估计的方差较小，采样方法的概率密度函数形式需要尽可能与被积函数形式一致。而式$\eqref{2}$的被积函数可划分为三项的乘积：光源项$L_i(x,\omega_i)$，brdf项$f_r(x,\omega_i,\omega_o)$，几何项$cos\theta$（或者$\frac{cos\theta cos\theta^{\prime}}{\Vert x^{\prime}-x^2\Vert}$​）。因此可以分别以光源，brdf为光线采样的概率密度函数基准。
 
 ##### A.光源采样
 
 本实验的光源采样方案有两种：
 
-1. 光源均匀采样：将采样划分为3个阶段，偏向采样Radiance高的光源及面积大的光源。
+1. 光源均匀采样[^10]：将采样划分为3个阶段，偏向采样Radiance高的光源及面积大的光源。
 
    具体步骤：
 
@@ -49,7 +49,7 @@ $$
 
    （备选采样方案：假设$p(\omega_i) \propto L_i(x,\omega_i)dA$，$p(R) = \frac{RS_R}{\sum{rS_r}}$，选定Radiance R以后，具体三角形按照面积为权重采样。待补充）
 
-2. **半球面的投影三角形上均匀采样**： 
+2. **半球面的投影三角形上均匀采样（Spherical Triangle Sampling）[^10]**： 
 
    考虑光源项（和部分几何项），假设$p_1(\mathbf{x}) \propto L_e(\mathbf{x^\prime}\rightarrow\mathbf{x})\frac{cos\theta^{\prime}}{\Vert \mathbf{x^{\prime}}-\mathbf{x}\Vert^2},\mathbf{x}\in \cup{A_i}$，$A_i$是第i个光源三角形的点集。
 
@@ -73,7 +73,6 @@ $$
 
    那么$P(\omega\in \Omega_i) = c\int_{\Omega_i}L_id\omega=\frac{L_i\int_{\Omega_i}d\omega}{\sum_{k}{L_k\int_{\Omega_k}{d\omega}}}$，其中$\int_{\Omega_i}d\omega$​在本实验中就是光源（球面）三角形的面积。
 
-   
 
 ##### B.brdf采样
 
@@ -88,13 +87,13 @@ $$
    对$p_6(\omega_i)$​积分：
    $$
    \begin{eqnarray}
-   1 &=& \int_{H^2_{\mathbf{x},\mathbf{n}} \cup H^2_{\mathbf{x},\mathbf{R}}}{c (\rho_d \frac{1}{\pi}cos\theta + \rho_s \frac{n+1}{2\pi}\cos^n\alpha)}d\omega_i  \tag{4}\\
-   1 &=& c(\rho_d\int_{H^2_{\mathbf{x},\mathbf{n}}}{ \frac{1}{\pi}cos\theta}d\omega_i + \rho_s \int_{H^2_{\mathbf{x},\mathbf{R}}}{\frac{n+1}{2\pi}\cos^n\alpha}) \tag{5}\\
-   1 &=& c(\rho_d + \rho_s) \tag{6}\\
+   1 &=& \int_{H^2_{\mathbf{x},\mathbf{n}} \cup H^2_{\mathbf{x},\mathbf{R}}}{c (\rho_d \frac{1}{\pi}cos\theta + \rho_s \frac{n+1}{2\pi}\cos^n\alpha)}d\omega_i  \tag{4} \label{4}\\
+   1 &=& c(\rho_d\int_{H^2_{\mathbf{x},\mathbf{n}}}{ \frac{1}{\pi}cos\theta}d\omega_i + \rho_s \int_{H^2_{\mathbf{x},\mathbf{R}}}{\frac{n+1}{2\pi}\cos^n\alpha}) \tag{5} \label{5}\\
+   1 &=& c(\rho_d + \rho_s) \tag{6} \label{6}\\
    c &=& \frac{1}{\rho_d + \rho_s}
    \end{eqnarray}
    $$
-   式$(4)$到式$(5)$可以将积分域划分为一个交集，两个差集来细致讨论。注意式$(5)$到式$(6)$​积分归一性的证明参见本课程ppt[^4]。
+   式$\eqref{4}$到式$\eqref{5}$可以将积分域划分为一个交集，两个差集来细致讨论。注意式$\eqref{5}$到式$\eqref{6}$​积分归一性的证明参见本课程ppt[^4]。
 
    因此对$p_6(\omega_i)$的采样步骤如下：
 
@@ -116,7 +115,7 @@ $$
 
 假设：需要计算积分
 $$
-\int_{\Omega}{f(x)d\mu(x)} \tag{7}
+\int_{\Omega}{f(x)d\mu(x)} \tag{7} \label{7}
 $$
 其中积分域$\Omega$，函数$f:\Omega \rightarrow \mathbb{R}$，测度$\mu$均已知。
 
@@ -127,40 +126,40 @@ $$
 ##### B.Multi-sample estimator
 
 $$
-F=\sum_{i=1}^{n}{\frac{1}{n_i}\sum_{j=1}^{n_i}{w_i(X_{i,j})\frac{f(X_{i,j})}{p_i(X_{i,j})}}} \tag{8}
+F=\sum_{i=1}^{n}{\frac{1}{n_i}\sum_{j=1}^{n_i}{w_i(X_{i,j})\frac{f(X_{i,j})}{p_i(X_{i,j})}}} \tag{8} \label{8}
 $$
 
-$F$是对式$(7)$的估计，其中$X_{i,j}$是第$i$种采样方法的第$j$个样本，$n_i$是第$i$种采样方法的样本数量。$w_i$是第$i$种采样方法的权重函数，其满足如下要求：
+$F$是对式$\eqref{7}$的估计，其中$X_{i,j}$是第$i$种采样方法的第$j$个样本，$n_i$是第$i$种采样方法的样本数量。$w_i$是第$i$种采样方法的权重函数，其满足如下要求：
 
 - 当$f(x) \neq 0$时，$\sum_{i=1}^{n}{w_i(x)}=1$ 。
 - 当$p_i(x)=0$时，$w_i(x) = 0$​。
 
-因此$F$可以看作是对式$(9)$的MonteCarlo估计，其中第$i$求和项使用第$i$种采样方法计算：
+因此$F$可以看作是对式$\eqref{9}$的MonteCarlo估计，其中第$i$求和项使用第$i$种采样方法计算：
 $$
-\int_{\Omega}{f(x)d\mu(x)} = \sum_{i=1}^{n}{\int_{\Omega}{w_i(x)f(x)d\mu(x)}} \tag{9}
+\int_{\Omega}{f(x)d\mu(x)} = \sum_{i=1}^{n}{\int_{\Omega}{w_i(x)f(x)d\mu(x)}} \tag{9} \label{9}
 $$
 可以容易证明$F$​是无偏的。
 
 ##### C.Balance heuristic
 
 $$
-\hat{w}_i(x)=\frac{n_ip_i(x)}{\sum_k{n_k p_k(x)}} \tag{10}
+\hat{w}_i(x)=\frac{n_ip_i(x)}{\sum_k{n_k p_k(x)}} \tag{10} \label{10}
 $$
 
 使用式$(10)$的估计量$F$​可以被证明具有较小的方差上界。
 
-式$(7)\sim (10)$参考于Stanford CS348b课程 slides[^6]。
+式$\eqref{7} \sim \eqref{10}$参考于Stanford CS348b课程 slides[^6]。
 
-##### D.本实验案例
+##### D.本实验的案例
 
 本次实验中，反射方程即为待计算积分。由光线采样方案可知，有两种sampling 方法，每种采样方法的样本数量$n_i=1$：
 
 - 光源采样，概率密度$p_0$，样本方向$X_0$
 - brdf采样 ，概率密度$p_1$，样本方向$X_1$
 
-因此，由式$(7)\sim(10)$，对$L_o(x,w_o)$的估计量为:
+因此，由式$\eqref{7} \sim \eqref{10}$，对$L_o(x,w_o)$的估计量为:
 $$
-F=\frac{f(X_0)}{p_0(X_0)+p_1(X_0)}+\frac{f(X_1)}{p_0(X_1)+p_1(X_1)} \tag{11}
+F=\frac{f(X_0)}{p_0(X_0)+p_1(X_0)}+\frac{f(X_1)}{p_0(X_1)+p_1(X_1)} \tag{11}\label{11}
 $$
 其中$f(\omega)=L_i(\mathbf{x},\omega)f_r(\mathbf{x},\omega,\omega_o)cos\theta$
 
@@ -178,15 +177,17 @@ P_RR：光线继续递归计算的概率。
 
 #### 六、光线求交及加速结构
 
-光线求交：直线与三角形求交，参考于课程ppt[^8]。
+光线求交：直线与三角形求交，细节参考于课程ppt[^8]。
 
-本实验加速结构采用3维uniform网格：
+加速结构：3维uniform 网格。
 
 BerkeleyCS184[^7]提到网格数量设置的Heuristic为#cells = 27 * #objs。本实验facet数量为$3092$，故设置网格数量$n_0= 100000$​。
 
 采用3D DDA算法，bresenham没意义。核心在于判断是否达到下一个整数网格的边界。3维降2维，2维降1维。非整数起始点。
 
-#### 七、核心算法及代码
+#### 七、核心算法
+
+本实验中对$\mathbf{x}$点处不同方向射出Radiance的求解有3个不同版本，在$main.cpp$绘制主流程中可以根据需要选择调用不同的着色方案。
 
 1. 直接光照与间接光照：反射Radiance根据能量来源被划分为**直接光照**和**间接光照**，分别计算，然后求和。
 
@@ -206,7 +207,7 @@ BerkeleyCS184[^7]提到网格数量设置的Heuristic为#cells = 27 * #objs。�
 
    **与Multi-sample estimator的关系：**
 
-   *结论1：此处直接光照与间接光照的划分及算法，可以看作是对式$(8)$ 中$F$​估计量的实现。（具体的$w_i$函数见下方细节）*
+   *结论1：此处直接光照与间接光照的划分及算法，可以看作是对式$\eqref{8}$ 中$F$估计量的实现。（具体的$w_i$函数见下方细节）*
 
    - 两种采样方法：光源采样$p_0$、brdf采样$p_1$
 
@@ -241,9 +242,89 @@ BerkeleyCS184[^7]提到网格数量设置的Heuristic为#cells = 27 * #objs。�
 
      容易验证以上$w_i$函数的设定满足Muti-sample estimator的两条要求，故可得到结论1。
 
-   - 
+2. 仅使用brdf采样：
 
-2. 
+   - 光源三角形暂时只考虑自发光，不计算反射Radiance。
+   - 非光源三角形没有自发光，只计算反射Radiance。
+   - 反射Radiance使用1个**brdf采样**样本计算。
+
+   ```c++
+   //main.cpp
+   //计算交点point处，沿着wo方向射出的Radiance。
+   RadianceRGB shade_with_brdf(intersec_result point, vec wo)
+   ```
+
+3. **MIS**:
+
+   - 光源三角形暂时只考虑自发光，不计算反射Radiance。
+   - 非光源三角形没有自发光，只计算反射Radiance。
+   - 获得1个**Spherical Triangle Sampling**（光源采样）样本和1个**brdf采样**样本，以Balance heuristic对其做加权平均。如式$(11)$所示。
+
+   ```c++
+   //main.cpp
+   //计算交点point处，沿着wo方向射出的Radiance。
+   RadianceRGB shade_with_mis(intersec_result point, vec wo)
+   ```
+
+   注意此处不再区分直接光照和间接光照。
+
+   由于着色方案1符合Multi-sample estimator模型，并且Balance heuristic在Stanford CS348b[^6]被证明相对于其他weight函数有明显较低的方差上界。
+
+   *那么本算法应当是本次实验中方差最低的着色方案。*
+
+   这在下面的实验结果截图中会得到验证。
+
+   进一步改进应当尝试power heuristic。
+
+#### 八、ToneMapping
+
+本实验采用gamma compression做ToneMapping。
+
+单点Radiance最大值maxRadiance设置为不同类型光源的单通道Radiance和：380
+
+gamma = 0.25
+
+#### 九、实验截图
+
+10 ray per pixel
+
+1. 直接光照与间接光照
+
+   光源均匀采样，视点两倍距离(视点沿视线反方向移动一倍视距)
+
+   ![光源均匀采样tonemapping gamma0.25视点两倍距离](C:\Users\luotong\Desktop\图形学\exp2汇总\brdf正确光源均匀采样tonemapping gamma0.25视点两倍距离.bmp)
+
+2. 仅使用brdf采样
+
+   待补
+
+3. **MIS**
+
+   视点两倍距离，绘制时间1074分钟。
+
+   ![MIS采样tonemapping gamma0.25视点两倍距离1074分钟](C:\Users\luotong\Desktop\图形学\exp2\brdf采样正确\MIS采样tonemapping gamma0.25视点两倍距离1074分钟.bmp)
+
+#### 十、工程代码结构
+
+工程名称：Monte Carlo Path Tracing
+
+代码语言：ISO C++20 标准
+
+IDE：Visual Studio2019
+
+依赖第三方库：tiny_obj_loader(读取obj文件)、pugixml(读取xml文件)
+
+| cpp文件         | 功能                                                         |
+| --------------- | :----------------------------------------------------------- |
+| BRDF.cpp        | 定义BRDF数据类型，用于计算；计算Phong模型BRDF；从Phong模型采样光线 |
+| main.cpp        | 绘制主流程；持有Myobj、Mylight对象；实现所有着色方案的shade函数；实现屏幕像素空间坐标到世界坐标系的映射；将计算结果现实到窗口中，并保存图像至本地 |
+| matrix3d.cpp    | 实现3维矩阵运算                                              |
+| Mylight.cpp     | 读取并维护xml文件中的光源数据；实现光源均匀采样；实现半球面的投影三角形上均匀采样（Spherical Triangle Sampling） |
+| Myobj.cpp       | 借助tiny_obj_loader读取并存储所有3维场景数据；实现3d uniform 网格；实现光线求交 |
+| RadianceRGB.cpp | 定义Radiance数据结构，用于计算；实现TongMapping              |
+| vec.cpp         | 实现所有3维向量运算                                          |
+
+
 
 [^1]:[GAMES101: 现代计算机图形学入门 (ucsb.edu)](https://sites.cs.ucsb.edu/~lingqi/teaching/games101.html)
 [^2]:[Assignment 3: Phong and Multiple Importance Sampling (mcgill.ca)](https://www.cim.mcgill.ca/~derek/ecse689_a3.html)
@@ -254,3 +335,4 @@ BerkeleyCS184[^7]提到网格数量设置的Heuristic为#cells = 27 * #objs。�
 [^7]:[10-acceleration (berkeley.edu)](https://cs184.eecs.berkeley.edu/public/sp21/lectures/lec-10-ray-tracing-acceleration/lec-10-ray-tracing-acceleration.pdf)
 [^8]:8-ray_casting_2023.pdf
 [^9]:[GAMES101_Lecture_16 (ucsb.edu)](https://sites.cs.ucsb.edu/~lingqi/teaching/resources/GAMES101_Lecture_16.pdf)
+[^10]:本人自己命名，不一定准确。
