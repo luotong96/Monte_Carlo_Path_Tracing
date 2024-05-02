@@ -4,6 +4,9 @@
 #include <random>
 #include <chrono>
 #include "matrix3d.h"
+
+double BRDF::eps = 1e-8;
+
 BRDF::BRDF(double a, double b, double c)
 {
 	RGB[0] = a; RGB[1] = b; RGB[2] = c;
@@ -49,7 +52,24 @@ sampledRay BRDF::sample_from_phong(vec n, vec wr, vec diffuse, vec specular, dou
 		double phi = 2 * std::numbers::pi * ksi2;
 
 		pdf *= cos(theta) / std::numbers::pi;
-		return sampledRay(vec(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta)), pdf);
+
+		//以n为中心轴，变换到世界坐标系。
+		
+		vec nx;
+		//n不可能与(1,0,0)、(0,1,0)同时共线
+		if (fabs(n.dot_product(vec(1, 0, 0)) - 1) > eps)
+		{
+			nx = n.cross_product(vec(1, 0, 0)).normalized();
+		}
+		else
+		{
+			nx = n.cross_product(vec(0, 1, 0)).normalized();
+		}
+			
+		vec ny = n.cross_product(nx).normalized();
+		matrix3d T(nx, ny, n);
+		vec dir = (T * vec(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta))).normalized();
+		return sampledRay(dir, pdf);
 	}
 	else if (ind == 1)
 	{
@@ -64,10 +84,19 @@ sampledRay BRDF::sample_from_phong(vec n, vec wr, vec diffuse, vec specular, dou
 		//theta,phi以wr的完全镜面反射R方向为中心z轴，变换到世界坐标系
 
 		vec R = ((wr * -1) + n * (2 * wr.dot_product(n))).normalized();
-		vec nx = R.cross_product((R + vec(0, 0, 10)).normalized()).normalized();
+		//R不可能与(1,0,0)、(0,1,0)同时共线
+		vec nx;
+		if (fabs(R.dot_product(vec(1, 0, 0)) - 1) > eps)
+		{
+			nx = R.cross_product(vec(1, 0, 0)).normalized();
+		}
+		else
+		{
+			nx = R.cross_product(vec(0, 1, 0)).normalized();
+		}
 		vec ny = R.cross_product(nx).normalized();
 		matrix3d T(nx, ny, R);
-		vec dir = T * vec(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta)).normalized();
+		vec dir = (T * vec(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta))).normalized();
 		return sampledRay(dir, pdf);
 	}
 

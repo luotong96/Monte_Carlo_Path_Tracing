@@ -335,7 +335,7 @@ intersec_result Myobj::closet_ray_intersect(vec ro, vec rd, triangle rotri)
 {
     vec xyz0 = (ro - vec(xyzmm[0][0], xyzmm[1][0], xyzmm[2][0])) * (1.0 / gridCellWidth);
     vec abc = rd;
-
+    
     int xyz[3];
     for (int i = 0; i < 3; i++)
     {
@@ -453,25 +453,22 @@ intersec_result Myobj::closet_ray_intersect(vec ro, vec rd, triangle rotri)
         int ind = -1;
         for (int i = 0; i < 3; i++)
         {
+            if (sign[i] == 0)continue;
             if (ts[i] < t)
             {
                 ind = i;
                 t = ts[i];
             }
         }
-        if (t == DBL_MAX)
+        if (t == DBL_MAX || ind == -1)
         {
-            printf("460!!!!\n");
+            printf("464!!!!\n");
         }
-        for (int i = 0; i < 3; i++)
-        {
-            if (fabs(t - ts[i]) < eps)
-            {
-                xyz[i] += sign[i];
-                nxyz[i] += sign[i];
-                ts[i] = (nxyz[i] - xyz0.xyz[i]) / abc.xyz[i];
-            }
-        }
+
+        xyz[ind] += sign[ind];
+        nxyz[ind] += sign[ind];
+        ts[ind] = (nxyz[ind] - xyz0.xyz[ind]) / abc.xyz[ind];
+
     }
     return ans;
 }
@@ -609,7 +606,7 @@ intersec_result Myobj::closet_ray_intersect_light_triangle(vec ro, vec rd, trian
         }
         if (t == DBL_MAX)
         {
-            printf("460!!!!\n");
+            printf("612!!!!\n");
         }
         for (int i = 0; i < 3; i++)
         {

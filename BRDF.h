@@ -16,6 +16,7 @@ struct sampledRay
 };
 class BRDF
 {
+	static double eps;
 public:
 	double RGB[3];
 public:

@@ -506,8 +506,8 @@ int main()
 	//veach
 	vec start = vec(28.2792, 5.2, 1.23612e-06);
 	vec w = (vec(0.0, 2.8, 0.0) - start);
-	//start = start - w;
-	//w = w * 2;
+	start = start - w;
+	w = w * 2;
 	//cornell
 	//vec start = vec(278.0, 273.0, -800.0);
 	//vec w = (vec(278.0, 273.0, -799.0) - start).normalized();
@@ -572,7 +572,7 @@ int main()
 				intersec_result rs = veach.closet_ray_intersect(eye, dir, triangle(-1, -1));
 				if (rs.isIntersec) 
 				{
-					RadianceRGB I = shade_with_mis(rs, dir * -1) * 0.1;
+					RadianceRGB I = shade_with_brdf(rs, dir * -1) * 0.1;
 					sum = sum + I;
 				}
 			}
