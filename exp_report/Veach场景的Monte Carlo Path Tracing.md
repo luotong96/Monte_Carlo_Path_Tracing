@@ -96,7 +96,7 @@ $$
    $$
    \begin{eqnarray}
    1 &=& \int_{H^2_{\mathbf{x},\mathbf{n}} \cup H^2_{\mathbf{x},\mathbf{R}}}{c (\rho_d \frac{1}{\pi}cos\theta + \rho_s \frac{n+1}{2\pi}\cos^n\alpha)}d\omega_i  \tag{4} \label{4}\\
-   1 &=& c(\rho_d\int_{H^2_{\mathbf{x},\mathbf{n}}}{ \frac{1}{\pi}cos\theta}d\omega_i + \rho_s \int_{H^2_{\mathbf{x},\mathbf{R}}}{\frac{n+1}{2\pi}\cos^n\alpha}) \tag{5} \label{5}\\
+   1 &=& c(\rho_d\int_{H^2_{\mathbf{x},\mathbf{n}}}{ \frac{1}{\pi}cos\theta}d\omega_i + \rho_s \int_{H^2_{\mathbf{x},\mathbf{R}}}{\frac{n+1}{2\pi}\cos^n\alpha}d\omega_i) \tag{5} \label{5}\\
    1 &=& c(\rho_d + \rho_s) \tag{6} \label{6}\\
    c &=& \frac{1}{\rho_d + \rho_s}
    \end{eqnarray}
@@ -134,6 +134,7 @@ $$
 - 任意$x \in \Omega$，$p_i(x)$可以被计算。
 
 ##### B.Multi-sample estimator
+
 
 $$
 F=\sum_{i=1}^{n}{\frac{1}{n_i}\sum_{j=1}^{n_i}{w_i(X_{i,j})\frac{f(X_{i,j})}{p_i(X_{i,j})}}} \tag{8} \label{8}
@@ -231,10 +232,8 @@ BerkeleyCS184[^7]提到网格数量设置的Heuristic为#cells = 27 * #objs。�
 
      正半球面$H^2_{\mathbf{x},\mathbf{n}}$上所有点构成的集合记为$U$​。
 
-     采样出的单位方向向量为$\omega_i$。
-
    - 两种采样方法的weight函数定义如下：
-     $$
+  $$
      \begin{equation}
      w_0(\omega_i) =\left\{
      \begin{aligned}
@@ -244,9 +243,9 @@ BerkeleyCS184[^7]提到网格数量设置的Heuristic为#cells = 27 * #objs。�
      \right.
      \end{equation}
      $$
-
+   
      $$
-     \begin{equation}
+  \begin{equation}
      w_1(\omega_i) =\left\{
      \begin{aligned}
      	\quad&0 \qquad \qquad  \omega_i \in B^\prime \\
@@ -255,7 +254,7 @@ BerkeleyCS184[^7]提到网格数量设置的Heuristic为#cells = 27 * #objs。�
      \right.
      \end{equation}
      $$
-
+   
      容易验证以上$w_i$函数的设定满足Muti-sample estimator的两条要求，故可得到结论1。
 
 2. 仅使用brdf采样：
