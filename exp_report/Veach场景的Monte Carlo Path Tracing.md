@@ -390,5 +390,5 @@ IDE：Visual Studio2019
 [^8]:8-ray_casting_2023.pdf
 [^9]:[GAMES101_Lecture_16 (ucsb.edu)](https://sites.cs.ucsb.edu/~lingqi/teaching/resources/GAMES101_Lecture_16.pdf)
 [^10]:本人自己命名，不一定准确。
-[^11]:若不加特殊说明，本文中所有与**方向角**有关的表述$\omega \in PointSet$定义为：$\omega \in \{\omega_i|\mathbf{x} + \omega_i \in PointSet\}$，$\mathbf{x}$为当前着色点。
+[^11]:若不加特殊说明，本文中所有与**立体角**有关的表述$\omega \in PointSet$定义为：$\omega \in \{\omega_i|\mathbf{x} + \omega_i \in PointSet\}$，$\mathbf{x}$为当前着色点。
 [^12]:本文中标记为“待补充”的部分为暂未实现的内容。
