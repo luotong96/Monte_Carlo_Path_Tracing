@@ -4,6 +4,8 @@ Monte_Carlo_Path_Tracing for CG course 2023 zju
 
 本次实验所有内容由本人独立完成。
 
+
+
 #### 一、渲染方程
 
 1. 由入射光线方向$$\omega_i$$​的视角
@@ -15,9 +17,11 @@ Monte_Carlo_Path_Tracing for CG course 2023 zju
    $$
    \begin{eqnarray} L_o(x,\omega_o) &=& \int_{\Omega^+}{L_i(x,\omega_i)f_r(x,\omega_i,\omega_o)cos\theta d\omega_i} \nonumber \\                                  &=& \int_A{L_e(\mathbf{x^\prime}\rightarrow\mathbf{x})f_r(x,\omega_i,\omega_o)}\frac{cos\theta cos\theta^{\prime}}{\Vert \mathbf{x^{\prime}}-\mathbf{x}\Vert^2}dA \tag{2} \label{2} \end{eqnarray}
    $$
-   <img src="C:\Users\luotong\Desktop\图形学\exp2汇总\image-20240430124916283.png" alt="image-20240430124916283" style="zoom:50%;" />
+   <img src=".\exp_report\image-20240430124916283.png" alt="image-20240430124916283" style="zoom:50%;" />
 
    以上图片及公式部分参考于Games101课程[^1]
+
+
 
 #### 二、Phong模型的brdf函数
 
@@ -30,6 +34,8 @@ $$
 
 - $\rho_d$是diffuse反射系数，$\rho_s$是specular反射系数，$\alpha$是$\omega_r$的完美镜面反射$R$与入射光线$\omega_i$之间的夹角，$n$​​是Phong模型exponent参数（shiness）
 - 注意：$\theta>\frac{\pi}{2}$时，第一项会取$0$。$\alpha>\frac{\pi}{2}$时，第二项会取$0$。
+
+
 
 #### 三、光线采样方案：
 
@@ -47,27 +53,29 @@ $$
    - 在该类光源三角形中，以三角形面积作为概率权重，随机采样一个三角形。
    - 在该三角形中均匀采样一个点，作为光源采样的结果。在一个光源三角形内均匀采样的细节：先在2d平面上${\{(\beta,\gamma)|\beta\geq0,\gamma\geq 0,\beta+\gamma\leq 1\}}$的三角形区域中均匀采样，然后仿射变换到空间中的光源三角形。重心坐标$(\alpha,\beta,\gamma)$的使用参考本课程ppt[^8]。
 
-   （备选采样方案：假设$p(\omega_i) \propto L_i(x,\omega_i)dA$，$p(R) = \frac{RS_R}{\sum{rS_r}}$，选定Radiance R以后，具体三角形按照面积为权重采样。待补充）
+   （备选采样方案：假设$p_0(\mathbf{x^\prime}) \propto L_e(\mathbf{x^\prime}\rightarrow\mathbf{x}),\enspace \mathbf{x^\prime}\in \cup{A_i}$，以$Radiance$乘以该类光源总面积作为概率权重，采样$Radiance$。选定$Radiance$以后，以三角形面积为权重，采样一个光源三角形。待补充[^12]）
 
 2. **半球面的投影三角形上均匀采样（Spherical Triangle Sampling）[^10]**： 
 
-   考虑光源项（和部分几何项），假设$p_1(\mathbf{x}) \propto L_e(\mathbf{x^\prime}\rightarrow\mathbf{x})\frac{cos\theta^{\prime}}{\Vert \mathbf{x^{\prime}}-\mathbf{x}\Vert^2},\mathbf{x}\in \cup{A_i}$，$A_i$是第i个光源三角形的点集。
+   考虑光源项（和部分几何项），假设$p_1(\mathbf{x^\prime}) \propto L_e(\mathbf{x^\prime}\rightarrow\mathbf{x})\frac{cos\theta^{\prime}}{\Vert \mathbf{x^{\prime}}-\mathbf{x}\Vert^2},\mathbf{x^\prime}\in \cup{A_i}$，$A_i$是第$i$个光源三角形的点集。
 
-   由积分变量替换可知，上式等价于$p_2(\omega_i)\propto L_e(\mathbf{x^\prime}\rightarrow\mathbf{x}),\enspace w_i\in \cup{A_i^\prime}$，$A_i^\prime$是第$i$个光源三角形径向投影(不考虑被遮挡)到半球面上所得球面三角形(Spherical Triangle)的点集。
+   由积分变量替换可知，上式等价于$p_2(\omega_i)\propto L_e(\mathbf{x^\prime}\rightarrow\mathbf{x}),\enspace w_i\in \cup{A_i^\prime}$[^11]，$A_i^\prime$是第$i$个光源三角形径向投影(不考虑被遮挡)到正半球面上所得球面三角形(Spherical Triangle)的点集。
 
    光源三角形投影到半球面上后得到球面三角形，在这些球面三角形上按面积均匀采样。在一个Spherical Triangle上均匀采样的细节参考于Arvo1995[^3]的5.2.1节
 
    采样$p_2(\omega_i)$的具体步骤：
 
-   - 计算所有光源三角形在当前点$\mathbf{x^\prime}$的半球面$H^2$上的投影三角形，由单位向量$\mathbf{A},\mathbf{B},\mathbf{C}$刻画。同时计算相关中间变量$a,b,c,\alpha,\beta,\gamma$等，以及投影三角形的面积$\mathcal{A}$。 
-   - 对于每个光源三角形，以光源Radiance乘以投影面积$L*\mathcal{A}$​作为概率权重，采样一个光源三角形。
-   - 在这个光源三角形上按面积均匀采样出一个方向，作为光源采样的结果。
+   - 计算所有光源三角形在当前点$\mathbf{x}$以$\mathbf{n}$为中心轴的正半球面$H^2_{\mathbf{x},\mathbf{n}}$上的径向投影三角形Spherical  Triangle，由单位向量$\mathbf{A},\mathbf{B},\mathbf{C}$刻画。同时计算相关中间变量$a,b,c,\alpha,\beta,\gamma$等，以及每个Spherical  Triangle的面积$\mathcal{A}$。 
+   - 对于每个Spherical  Triangle，以其光源Radiance乘以投影面积$L*\mathcal{A}$作为概率权重，采样一个Spherical  Triangle。
+   - 在这个Spherical  Triangle上按面积均匀采样出一个方向，作为光源采样的结果。
 
-   此处可以进一步考虑假设$p_3(\omega_i)\propto L_e(\mathbf{x^\prime}\rightarrow\mathbf{x})cos\theta,\enspace w_i\in \cup{A_i^\prime}$该如何采样，待补充。
+   注意：本实验的代码实现依然可能会采样出指向当前平面法向$\mathbf{n}$负半空间的光线。
+
+   此处可以进一步考虑假设$p_3(\omega_i)\propto L_e(\mathbf{x^\prime}\rightarrow\mathbf{x})cos\theta,\enspace  \omega_i\in \cup{A_i^\prime}$该如何采样，待补充。
 
 3. 以上两种采样方案都有使用Radiance*面积来作为光源三角形的概率权重，这里解释一下为何正确。
 
-   假设$p(\omega) \propto L ,x\in\Omega,\Omega = \cup\Omega_i$，$L$在$\Omega_i$上是常数。
+   假设$p(\omega) \propto L ,\omega \in\Omega,\Omega = \cup\Omega_i$，$L$在$\Omega_i$上是常数。
 
    那么$p(\omega) = cL$，由概率归一性，$c\int_\Omega Ld\omega=1$，则$c\sum_{k}{\int_{\Omega_k}{L_kd\omega}} = 1$，即$c=\frac{1}{\sum_{k}{L_k\int_{\Omega_k}{d\omega}}}$
 
@@ -109,6 +117,8 @@ $$
 
    可能会更简单，因为$p_4(\omega_i)$中的$\alpha$变为了$\theta$。
 
+
+
 #### 四、Multiple Importance Sampling(MIS)
 
 ##### A.Multi-sample Model
@@ -146,7 +156,7 @@ $$
 \hat{w}_i(x)=\frac{n_ip_i(x)}{\sum_k{n_k p_k(x)}} \tag{10} \label{10}
 $$
 
-使用式$(10)$的估计量$F$​可以被证明具有较小的方差上界。
+使用式$\eqref{10}$的估计量$F$​可以被证明具有较小的方差上界。
 
 式$\eqref{7} \sim \eqref{10}$参考于Stanford CS348b课程 slides[^6]。
 
@@ -165,6 +175,8 @@ $$
 
 可以进一步尝试power heuristic[^6]（待补充）
 
+
+
 #### 五、Russian Roulette
 
 本实验的Russian Roulette参数设置：
@@ -173,7 +185,9 @@ P_RR：光线继续递归计算的概率。
 
 光源采样+brdf采样：P_RR = 0.6
 
-仅brdf采样：P_RR = 0.8
+仅brdf采样：P_RR = 0.6
+
+
 
 #### 六、光线求交及加速结构
 
@@ -185,13 +199,15 @@ BerkeleyCS184[^7]提到网格数量设置的Heuristic为#cells = 27 * #objs。�
 
 采用3D DDA算法，bresenham没意义。核心在于判断是否达到下一个整数网格的边界。3维降2维，2维降1维。非整数起始点。
 
+
+
 #### 七、核心算法
 
-本实验中对$\mathbf{x}$点处不同方向射出Radiance的求解有3个不同版本，在$main.cpp$绘制主流程中可以根据需要选择调用不同的着色方案。
+本实验中对$\mathbf{x}$点处不同方向射出Radiance的求解有3个不同版本，在$main.cpp$绘制主流程中可以选择调用不同版本的着色方案。
 
 1. 直接光照与间接光照：反射Radiance根据能量来源被划分为**直接光照**和**间接光照**，分别计算，然后求和。
 
-   - 直接光照使用1个**光源采样**样本计算
+   - 直接光照使用1个**光源采样**样本计算（光源采样可使用光源均匀采样或者Spherical Triangle Sampling）
    - 间接光照使用1个**brdf采样**样本计算
    - 若brdf采样样本方向射向光源三角形，本次间接光照为0。因为这部分Radiance已经由直接光照计算。
    - 光源三角形暂时只考虑自发光，不计算反射Radiance。
@@ -211,19 +227,19 @@ BerkeleyCS184[^7]提到网格数量设置的Heuristic为#cells = 27 * #objs。�
 
    - 两种采样方法：光源采样$p_0$、brdf采样$p_1$
 
-   - 假设当前着色点$\mathbf{x}$，法向$\mathbf{n}$。所有光源三角形径向投影(不考虑被遮挡)到正半球面$H^2_{\mathbf{x},\mathbf{n}}$上所得点集为$A^\prime$，$B^\prime = \{\mathbf{a}\in A^\prime |由\mathbf{x}到\mathbf{a}发出的光线可以不被遮挡地射到某个光源三角形\}$。可知$B^\prime \subseteq A^\prime$，且$A - B^\prime$中的点与光源三角形中间有遮挡。
+   - 假设当前着色点$\mathbf{x}$，法向$\mathbf{n}$。所有光源三角形径向投影(不考虑被遮挡)到正半球面$H^2_{\mathbf{x},\mathbf{n}}$上所得点集为$A^\prime$，$B^\prime = \{\mathbf{a}\in A^\prime |由\mathbf{x}指向\mathbf{a}发出的光线可以不被遮挡地射到某个光源三角形\}$。可知$B^\prime \subseteq A^\prime$，且$A - B^\prime$中的点与光源三角形中间有遮挡。
 
      正半球面$H^2_{\mathbf{x},\mathbf{n}}$上所有点构成的集合记为$U$​。
 
      采样出的单位方向向量为$\omega_i$。
 
-   - 两种采样方案的weight函数定义如下：
+   - 两种采样方法的weight函数定义如下：
      $$
      \begin{equation}
      w_0(\omega_i) =\left\{
      \begin{aligned}
-     	\quad&1 \qquad \qquad  \mathbf{x}+\omega_i \in B^\prime \\
-     	\quad&0 \qquad \qquad  \mathbf{x}+\omega_i \in U-B^\prime
+     	\quad&1 \qquad \qquad  \omega_i \in B^\prime \\
+     	\quad&0 \qquad \qquad  \omega_i \in U-B^\prime
      \end{aligned}
      \right.
      \end{equation}
@@ -233,8 +249,8 @@ BerkeleyCS184[^7]提到网格数量设置的Heuristic为#cells = 27 * #objs。�
      \begin{equation}
      w_1(\omega_i) =\left\{
      \begin{aligned}
-     	\quad&0 \qquad \qquad  \mathbf{x}+\omega_i \in B^\prime \\
-     	\quad&1 \qquad \qquad  \mathbf{x}+\omega_i \in U-B^\prime
+     	\quad&0 \qquad \qquad  \omega_i \in B^\prime \\
+     	\quad&1 \qquad \qquad  \omega_i \in U-B^\prime
      \end{aligned}
      \right.
      \end{equation}
@@ -258,7 +274,7 @@ BerkeleyCS184[^7]提到网格数量设置的Heuristic为#cells = 27 * #objs。�
 
    - 光源三角形暂时只考虑自发光，不计算反射Radiance。
    - 非光源三角形没有自发光，只计算反射Radiance。
-   - 获得1个**Spherical Triangle Sampling**（光源采样）样本和1个**brdf采样**样本，以Balance heuristic对其做加权平均。如式$(11)$所示。
+   - 获得1个**Spherical Triangle Sampling**（光源采样）样本和1个**brdf采样**样本，以Balance heuristic对其做加权平均。如式$\eqref{11}$所示。
 
    ```c++
    //main.cpp
@@ -270,11 +286,13 @@ BerkeleyCS184[^7]提到网格数量设置的Heuristic为#cells = 27 * #objs。�
 
    由于着色方案1符合Multi-sample estimator模型，并且Balance heuristic在Stanford CS348b[^6]被证明相对于其他weight函数有明显较低的方差上界。
 
-   *那么本算法应当是本次实验中方差最低的着色方案。*
+   ***那么本算法应当是本次实验中方差最低的着色方案。***
 
-   这在下面的实验结果截图中会得到验证。
+   这在后续实验结果中会得到验证。
 
    进一步改进应当尝试power heuristic。
+
+
 
 #### 八、ToneMapping
 
@@ -284,25 +302,59 @@ BerkeleyCS184[^7]提到网格数量设置的Heuristic为#cells = 27 * #objs。�
 
 gamma = 0.25
 
+
+
 #### 九、实验截图
 
 10 ray per pixel
 
+xml规定的参数：
+
+```xml
+<camera type="perspective" width="1280" height="720" fovy="20.1143">
+	<eye x="28.2792" y="5.2" z="1.23612e-06"/> 
+	<lookat x="0.0" y="2.8" z="0.0"/> 
+	<up x="0.0" y="1.0" z="0.0"/> 
+</camera> 
+```
+
 1. 直接光照与间接光照
 
-   光源均匀采样，视点两倍距离(视点沿视线反方向移动一倍视距)
+   光源均匀采样，**视点2倍距离**(xml文件规定的视点沿视线反方向移动一倍视距)，绘制时间330min。
 
-   ![光源均匀采样tonemapping gamma0.25视点两倍距离](C:\Users\luotong\Desktop\图形学\exp2汇总\brdf正确光源均匀采样tonemapping gamma0.25视点两倍距离.bmp)
+   ![光源均匀采样tonemapping gamma0.25视点两倍距离](.\exp_report\光源均匀采样2倍视距330min.bmp)
+
+   
+
+   Spherical Triangle Sampling，**视点2倍距离**，绘制时间1300min。
+
+   ![光源spherical采样两倍距离brdf采样错误](.\exp_report\光源spherical采样两倍距离brdf采样错误.bmp)
+
+   
 
 2. 仅使用brdf采样
 
-   待补
+   **视点2倍距离**，绘制时间60min。
+
+   ![仅仅brdf采样2倍视距60min](.\exp_report\仅仅brdf采样2倍视距60min.bmp)
+
+   
 
 3. **MIS**
 
-   视点两倍距离，绘制时间1074分钟。
+   **视点2倍距离**，绘制时间1388分钟。
 
-   ![MIS采样tonemapping gamma0.25视点两倍距离1074分钟](C:\Users\luotong\Desktop\图形学\exp2\brdf采样正确\MIS采样tonemapping gamma0.25视点两倍距离1074分钟.bmp)
+   ![MIS 2倍视距1388min](.\exp_report\MIS 2倍视距1388min.bmp)
+
+   
+
+   **视点1倍距离**（即xml文件规定的原始参数），绘制时间1125分钟。(下图背景部分缺乏光照，debug未果，待补充)
+
+   ![MIS 1倍视距1125min](.\exp_report\MIS 1倍视距1125min.bmp)
+
+由以上实验结果截图可知，MIS的着色方案方差较低。但绘制时间明显更长。
+
+
 
 #### 十、工程代码结构
 
@@ -314,25 +366,29 @@ IDE：Visual Studio2019
 
 依赖第三方库：tiny_obj_loader(读取obj文件)、pugixml(读取xml文件)
 
+代码托管：https://github.com/luotong96/Monte_Carlo_Path_Tracing.git
+
 | cpp文件         | 功能                                                         |
 | --------------- | :----------------------------------------------------------- |
 | BRDF.cpp        | 定义BRDF数据类型，用于计算；计算Phong模型BRDF；从Phong模型采样光线 |
-| main.cpp        | 绘制主流程；持有Myobj、Mylight对象；实现所有着色方案的shade函数；实现屏幕像素空间坐标到世界坐标系的映射；将计算结果现实到窗口中，并保存图像至本地 |
+| main.cpp        | 绘制主流程；持有Myobj、Mylight对象；实现所有着色方案的shade函数；实现屏幕像素空间坐标到世界坐标系的映射；将计算结果显示到窗口中，并保存图像至本地 |
 | matrix3d.cpp    | 实现3维矩阵运算                                              |
 | Mylight.cpp     | 读取并维护xml文件中的光源数据；实现光源均匀采样；实现半球面的投影三角形上均匀采样（Spherical Triangle Sampling） |
 | Myobj.cpp       | 借助tiny_obj_loader读取并存储所有3维场景数据；实现3d uniform 网格；实现光线求交 |
-| RadianceRGB.cpp | 定义Radiance数据结构，用于计算；实现TongMapping              |
+| RadianceRGB.cpp | 定义Radiance数据结构，用于计算；实现ToneMapping              |
 | vec.cpp         | 实现所有3维向量运算                                          |
 
-
+多线程：待补充。
 
 [^1]:[GAMES101: 现代计算机图形学入门 (ucsb.edu)](https://sites.cs.ucsb.edu/~lingqi/teaching/games101.html)
 [^2]:[Assignment 3: Phong and Multiple Importance Sampling (mcgill.ca)](https://www.cim.mcgill.ca/~derek/ecse689_a3.html)
 [^3]:Arvo J R. Analytic methods for simulated light transport[D]. Yale University, 1995.
 [^4]:11-mc_ii_2023.pdf
-[^5]:本人推了一周公式，还推错了。可能会有助于后续对Blinn-Phong brdf采样的分析。![](C:\Users\luotong\Desktop\图形学\exp2汇总\F99FD86F-39F2-45E6-8527-E4A0757D2895_L0_001.JPG)
+[^5]:推公式，但推错了。可能会有助于后续对Blinn-Phong brdf采样的分析。![](.\exp_report\F99FD86F-39F2-45E6-8527-E4A0757D2895_L0_001.JPG)
 [^6]:[veach-chapter9.pdf (stanford.edu)](https://graphics.stanford.edu/courses/cs348b-03/papers/veach-chapter9.pdf)
 [^7]:[10-acceleration (berkeley.edu)](https://cs184.eecs.berkeley.edu/public/sp21/lectures/lec-10-ray-tracing-acceleration/lec-10-ray-tracing-acceleration.pdf)
 [^8]:8-ray_casting_2023.pdf
 [^9]:[GAMES101_Lecture_16 (ucsb.edu)](https://sites.cs.ucsb.edu/~lingqi/teaching/resources/GAMES101_Lecture_16.pdf)
 [^10]:本人自己命名，不一定准确。
+[^11]:若不加特殊说明，本文中所有与**方向角**有关的表述$\omega \in PointSet$定义为：$\omega \in \{\omega_i|\mathbf{x} + \omega_i \in PointSet\}$，$\mathbf{x}$为当前着色点。
+[^12]:本文中标记为“待补充”的部分为暂未实现的内容。
