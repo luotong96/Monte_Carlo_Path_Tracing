@@ -294,8 +294,8 @@ RadianceRGB shade(intersec_result point, vec wo)
 
 	// L_dir 直接光照的radiance
 	RadianceRGB L_dir;
-	sampledLightPoint lightpoint = lights.select_a_point_from_lights(veach);
-	//sampledLightPoint lightpoint = lights.select_a_point_from_lights_spherical_triangle(p, N, veach);
+	//sampledLightPoint lightpoint = lights.select_a_point_from_lights(veach);
+	sampledLightPoint lightpoint = lights.select_a_point_from_lights_spherical_triangle(p, N, veach);
 
 	vec x1 = lightpoint.coord;
 	//光源法向量
@@ -372,7 +372,7 @@ RadianceRGB shade_with_brdf(intersec_result point, vec wo)
 	//光照，初始为0
 	RadianceRGB L;
 	//俄罗斯轮盘继续的概率
-	double P_RR = 0.8;
+	double P_RR = 0.6;
 
 	unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
 	std::default_random_engine generator(seed1);
@@ -462,7 +462,7 @@ RadianceRGB shade_with_mis(intersec_result point, vec wo)
 			double phongPdf = BRDF::eval_sample_from_phong_pdf(N, wl, wo, vec(mtl.diffuse[0], mtl.diffuse[1], mtl.diffuse[2]), vec(mtl.specular[0], mtl.specular[1], mtl.specular[2]), mtl.shininess);
 			//注意结尾的MIS
 			L_light = shade_with_mis(rstmp, wl * -1) * brdf * (wl.dot_product(N) / (lightpoint.prob + phongPdf) / P_RR);
-		}
+		} 
 	}
 
 	//来自brdf采样的光线contribution
@@ -572,7 +572,7 @@ int main()
 				intersec_result rs = veach.closet_ray_intersect(eye, dir, triangle(-1, -1));
 				if (rs.isIntersec) 
 				{
-					RadianceRGB I = shade_with_brdf(rs, dir * -1) * 0.1;
+					RadianceRGB I = shade(rs, dir * -1) * 0.1;
 					sum = sum + I;
 				}
 			}
