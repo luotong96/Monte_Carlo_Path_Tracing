@@ -253,7 +253,7 @@ There are 3 different procedures of calculating exiting $Radiance$ of shading po
           \end{aligned} 
           \right. \right\} \nonumber
      \end{equation}
-     ```
+```
 
    - It can be inffered that  $B^\prime \subseteq A^\prime$ , and $A - B^\prime$ is the set of points whose path towards light triangle is blocked.
 
@@ -271,7 +271,7 @@ There are 3 different procedures of calculating exiting $Radiance$ of shading po
      \right. \label{12}
      \end{equation}
 ```
----
+
 
 ```math
 \begin{equation}
