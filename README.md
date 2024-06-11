@@ -1,12 +1,8 @@
-<script type=""text/javascript"">
-window.MathJax = {
-  tex: {
-    tags: 'ams'
-  }
-};</script>
+Due to imperfect math equation supporting on github, please check [pdf](https://github.com/luotong96/Monte_Carlo_Path_Tracing/blob/main/exp_report/Veach-Monte%20Carlo%20Path%20Tracing%20-%20english-final.pdf) for further reading.
+
 ## Veach——Monte Carlo Path Tracing
 
-Monte_Carlo_Path_Tracing for CG course 2023 zju
+For CG course 2023 zju
 
 The following contents are independently completed by myself.
 
