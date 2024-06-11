@@ -350,7 +350,7 @@ Hyper-parameters configured in xml:
 
    Rendering time: $330$ min.
 
-   ![光源均匀采样tonemapping gamma0.25视点两倍距离](.\exp_report\光源均匀采样2倍视距330min.bmp)
+   ![光源均匀采样tonemapping gamma0.25视点两倍距离](./exp_report/光源均匀采样2倍视距330min.bmp)
 
    
 
@@ -358,7 +358,7 @@ Hyper-parameters configured in xml:
 
    Rendering time: $1300$ min.
 
-   ![光源spherical采样两倍距离brdf采样错误](.\exp_report\光源spherical采样两倍距离brdf采样错误.bmp)
+   ![光源spherical采样两倍距离brdf采样错误](./exp_report/光源spherical采样两倍距离brdf采样错误.bmp)
 
    
 
@@ -368,7 +368,7 @@ Hyper-parameters configured in xml:
 
     Rendering time: $60$ min.
 
-   ![仅仅brdf采样2倍视距60min](.\exp_report\仅仅brdf采样2倍视距60min.bmp)
+   ![仅仅brdf采样2倍视距60min](./exp_report/仅仅brdf采样2倍视距60min.bmp)
 
    
 
@@ -378,7 +378,7 @@ Hyper-parameters configured in xml:
 
    Rendering time: $1388$ min.
 
-   ![MIS 2倍视距1388min](.\exp_report\MIS 2倍视距1388min.bmp)
+   ![MIS 2倍视距1388min](./exp_report/MIS 2倍视距1388min.bmp)
 
    
 
@@ -388,7 +388,7 @@ Hyper-parameters configured in xml:
 
    The background of the following figure lack illumination partially. I debugged many times, but fail to find out. To be continued[^5].
 
-   ![MIS 1倍视距1125min](.\exp_report\MIS 1倍视距1125min.bmp)
+   ![MIS 1倍视距1125min](./exp_report/MIS 1倍视距1125min.bmp)
 
 The above results show that Spherical Triangle Sampling lead to lower variance, but consumes much more time.
 
@@ -429,7 +429,7 @@ Multi-thread: To be continued[^5].
 [^5]: To be continued means it haven't been implemented. 
 [^6]: Unless otherwise specified,  treat expression about solid angle $\omega \in PointSet$ as $\omega \in \{\omega_i|\mathbf{x} + \omega_i \in PointSet\}$, $\mathbf{x}$ is the current shading point.
 [^7]: Arvo J R. Analytic methods for simulated light transport[D]. Yale University, 1995.
-[^8]: Direct integral evaluation, but is not correct. May benefit detailed analysis when sampling the Blinn-Phong brdf.![](.\exp_report\F99FD86F-39F2-45E6-8527-E4A0757D2895_L0_001.JPG)
+[^8]: Direct integral evaluation, but is not correct. May benefit detailed analysis when sampling the Blinn-Phong brdf.![](./exp_report/F99FD86F-39F2-45E6-8527-E4A0757D2895_L0_001.JPG)
 [^9]: 11-mc_ii_2023.pdf
 [^10]: [veach-chapter9.pdf (stanford.edu)](https://graphics.stanford.edu/courses/cs348b-03/papers/veach-chapter9.pdf)
 [^11]: [10-acceleration (berkeley.edu)](https://cs184.eecs.berkeley.edu/public/sp21/lectures/lec-10-ray-tracing-acceleration/lec-10-ray-tracing-acceleration.pdf)
