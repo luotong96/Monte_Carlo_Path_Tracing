@@ -7,7 +7,7 @@ The following contents are independently completed by myself.
 #### 1. Rendering Equation
 
 1. From the perspective of incident ray $\omega_i$
-   ``` math
+```math
    \begin{equation}
    L_o(p,\omega_o)=L_e(p,\omega_o)+\int_{\Omega^+}{L_i(p,\omega_i)f_r(p,\omega_i,\omega_o)(n \cdot \omega_i)d\omega_i} \label{1}
    \end{equation}
