@@ -1,6 +1,9 @@
-<script type="text/x-mathjax-config">
-  MathJax.Hub.Config({ TeX: { equationNumbers: {autoNumber: "AMS"} } });
-</script>
+<script type=""text/javascript"">
+window.MathJax = {
+  tex: {
+    tags: 'ams'
+  }
+};</script>
 ## Veach——Monte Carlo Path Tracing
 
 Monte_Carlo_Path_Tracing for CG course 2023 zju
