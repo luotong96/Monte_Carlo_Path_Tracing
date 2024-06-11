@@ -14,7 +14,7 @@ The following contents are independently completed by myself.
    ```
 
 2. From the perspective of sampling points $\mathbf{x^\prime}$ on area light
-   ```math
+```math
    \begin{eqnarray} L_o(x,\omega_o) &=& \int_{\Omega^+}{L_i(x,\omega_i)f_r(x,\omega_i,\omega_o)cos\theta d\omega_i} \nonumber \\                                  &=& \int_A{L_e(\mathbf{x^\prime}\rightarrow\mathbf{x})f_r(x,\omega_i,\omega_o)}\frac{cos\theta cos\theta^{\prime}}{\Vert \mathbf{x^{\prime}}-\mathbf{x}\Vert^2}dA \label{2} \end{eqnarray}
    ```
    <img src=".\exp_report\image-20240430124916283.png" alt="image-20240430124916283" style="zoom:50%;" />
@@ -26,9 +26,9 @@ The following contents are independently completed by myself.
 #### 2. BRDF of Phong Model
 
 ​	
-$$
+```math
 \begin{eqnarray} f_r(\mathbf{x}, \omega_i, \omega_r) &=& f_{r,d}(\mathbf{x}, \omega_i, \omega_r) + f_{r,s}(\mathbf{x}, \omega_i, \omega_r) \nonumber \\ &=& \rho_d \frac{1}{\pi} + \rho_s \frac{n+1}{2\pi}\cos^n \alpha \label{3} \end{eqnarray}
-$$
+```
 
 $\eqref{3}$ references from[^2]
 
@@ -95,14 +95,14 @@ Two different sampling techniques：
    Hence the space of  $\omega_i$ is expanded. Let $\omega_i \in H^2_{\mathbf{x},\mathbf{n}} \cup H^2_{\mathbf{x},\mathbf{R}}$ , then $p_6(\omega_i)=c (\rho_d \frac{1}{\pi}cos\theta + \rho_s \frac{n+1}{2\pi}\cos^n\alpha),\enspace \omega_i \in H^2_{\mathbf{x},\mathbf{n}} \cup H^2_{\mathbf{x},\mathbf{R}}$ . $H^2_{\mathbf{x},\mathbf{R}}$ is the positive hemispherical surface with current shading point $\mathbf{x}$ as origin and $\mathbf{R}$ as central axis. 
 
    Integrate over  $p_6(\omega_i)$ :
-   $$
+```math
    \begin{eqnarray}
    1 &=& \int_{H^2_{\mathbf{x},\mathbf{n}} \cup H^2_{\mathbf{x},\mathbf{R}}}{c (\rho_d \frac{1}{\pi}cos\theta + \rho_s \frac{n+1}{2\pi}\cos^n\alpha)}d\omega_i  \label{4}\\
    1 &=& c(\rho_d\int_{H^2_{\mathbf{x},\mathbf{n}}}{ \frac{1}{\pi}cos\theta}d\omega_i + \rho_s \int_{H^2_{\mathbf{x},\mathbf{R}}}{\frac{n+1}{2\pi}\cos^n\alpha}d\omega_i)  \label{5}\\
    1 &=& c(\rho_d + \rho_s) \label{6}\\
    c &=& \frac{1}{\rho_d + \rho_s} \nonumber
    \end{eqnarray}
-   $$
+```
    In order to deduce from  $\eqref{4}$ to $\eqref{5}$, domain of integration could be separated into 1 intersection and 2 difference sets and evaluate integrand over them. Provement of normalization from $\eqref{5}$ to $\eqref{6}$ references from course slides[^9].
 
    Steps for sampling $p_6(\omega_i)$ follow：
@@ -126,11 +126,11 @@ Two different sampling techniques：
 ##### A.Multi-sample Model
 
 Assume: Following intergal needs evaluation
-$$
+```math
 \begin{equation}
 \int_{\Omega}{f(x)d\mu(x)}  \label{7}
 \end{equation}
-$$
+```
 and the domain of integration $\Omega$ , function $f:\Omega \rightarrow \mathbb{R}$ , measurement $\mu$ are all given。
 
 - A set of $n$ different sampling techniques on the domain $\Omega$ is given, whose corresponding density functions are labeled $p_1,p_2...p_n$.
@@ -139,11 +139,11 @@ and the domain of integration $\Omega$ , function $f:\Omega \rightarrow \mathbb{
 ##### B.Multi-sample estimator
 
 
-$$
+```math
 \begin{equation}
 F=\sum_{i=1}^{n}{\frac{1}{n_i}\sum_{j=1}^{n_i}{w_i(X_{i,j})\frac{f(X_{i,j})}{p_i(X_{i,j})}}} \label{8}
 \end{equation}
-$$
+```
 
 $F$ is an estimator of equation $\eqref{7}$ , among which $X_{i,j}$ is $j^{th}$ sample from $i^{th}$ sampling technique, for $j = 1,...,n_i$ . $w_i$ is weighting function of $i^{th}$ sampling technique, which satisfies the following two conditions:
 
@@ -151,20 +151,20 @@ $F$ is an estimator of equation $\eqref{7}$ , among which $X_{i,j}$ is $j^{th}$ 
 - $w_i(x) = 0$ whenever $p_i(x)=0$.
 
 Therefore $F$ is a MonteCarlo estimator of equation $\eqref{9}$ , in which $i^{th}$ sampling technique contributes to $i^{th}$ summation term.
-$$
+```math
 \begin{equation}
 \int_{\Omega}{f(x)d\mu(x)} = \sum_{i=1}^{n}{\int_{\Omega}{w_i(x)f(x)d\mu(x)}} \label{9}
 \end{equation}
-$$
+```
 It's provable that $F$ is unbiased.
 
 ##### C.Balance heuristic
 
-$$
+```math
 \begin{equation}
 \hat{w}_i(x)=\frac{n_ip_i(x)}{\sum_k{n_k p_k(x)}} \label{10}
 \end{equation}
-$$
+```
 
 It can be proved that estimator with equation $\eqref{10}$​ being weighting function guarantees lower variance upper bound.
 
@@ -178,11 +178,11 @@ In this project, reflectance equation is the integral to be evaluated. Generally
 - Sample the brdf, with p.d.f $p_1$, then sampled direction $X_1$ is obtained.
 
 According to equation $\eqref{7} \sim \eqref{10}$, the estimator of $L_o(x,w_o)$ could be:
-$$
+```math
 \begin{equation}
 F=\frac{f(X_0)}{p_0(X_0)+p_1(X_0)}+\frac{f(X_1)}{p_0(X_1)+p_1(X_1)} \label{11}
 \end{equation}
-$$
+```
 in which $f(\omega)=L_i(\mathbf{x},\omega)f_r(\mathbf{x},\omega,\omega_o)cos\theta$
 
 Further attempts could be made about power heuristic[^10].(To be continued[^5])
@@ -241,7 +241,7 @@ There are 3 different procedures of calculating exiting $Radiance$ of shading po
 
    - Assume current shading point $\mathbf{x}$, normal vector $\mathbf{n}$.  $A^\prime$ is the point set obtained by radially projecting all light triangles on the positive hemispherical surface $H^2_{\mathbf{x},\mathbf{n}}$​​ , taking no account of visibility issue.
 
-   - $$
+```math
      \begin{equation}
           B^\prime = \left\{ \mathbf{a}\in A^\prime \left|
           \begin{aligned}
@@ -250,7 +250,7 @@ There are 3 different procedures of calculating exiting $Radiance$ of shading po
           \end{aligned} 
           \right. \right\} \nonumber
      \end{equation}
-     $$
+     ```
 
    - It can be inffered that  $B^\prime \subseteq A^\prime$ , and $A - B^\prime$ is the set of points whose path towards light triangle is blocked.
 
@@ -258,7 +258,7 @@ There are 3 different procedures of calculating exiting $Radiance$ of shading po
 
    - The weighting functions of 2 sampling techniques are defined as follows :
 
-$$
+```math
 \begin{equation}
      w_0(\omega_i) =\left\{
      \begin{aligned}
@@ -267,10 +267,10 @@ $$
      \end{aligned}
      \right. \label{12}
      \end{equation}
-$$
+```
 
 
-$$
+```math
 \begin{equation}
      w_1(\omega_i) =\left\{
      \begin{aligned}
@@ -279,7 +279,7 @@ $$
      \end{aligned}
      \right. \label{13}
      \end{equation}
-$$
+```
 
    It can be verified that function $\eqref{12}$  and  $\eqref{13}$ satisfy the two condition proposed in  Multi-sample estimator. 									$\blacksquare$
 
