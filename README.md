@@ -14,9 +14,9 @@ The following contents are independently completed by myself.
    ```
 
 2. From the perspective of sampling points $\mathbf{x^\prime}$ on area light
-   $$
+   ```math
    \begin{eqnarray} L_o(x,\omega_o) &=& \int_{\Omega^+}{L_i(x,\omega_i)f_r(x,\omega_i,\omega_o)cos\theta d\omega_i} \nonumber \\                                  &=& \int_A{L_e(\mathbf{x^\prime}\rightarrow\mathbf{x})f_r(x,\omega_i,\omega_o)}\frac{cos\theta cos\theta^{\prime}}{\Vert \mathbf{x^{\prime}}-\mathbf{x}\Vert^2}dA \label{2} \end{eqnarray}
-   $$
+   ```
    <img src=".\exp_report\image-20240430124916283.png" alt="image-20240430124916283" style="zoom:50%;" />
 
    The above images and formulas partially reference from Games101 course[^1]
