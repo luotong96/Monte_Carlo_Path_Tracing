@@ -1,3 +1,6 @@
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({ TeX: { equationNumbers: {autoNumber: "AMS"} } });
+</script>
 ## Veach——Monte Carlo Path Tracing
 
 Monte_Carlo_Path_Tracing for CG course 2023 zju
@@ -268,7 +271,7 @@ There are 3 different procedures of calculating exiting $Radiance$ of shading po
      \right. \label{12}
      \end{equation}
 ```
-
+---
 
 ```math
 \begin{equation}
