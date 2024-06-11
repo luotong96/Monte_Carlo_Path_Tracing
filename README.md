@@ -350,6 +350,7 @@ Hyper-parameters configured in xml:
 
    Rendering time: $330$ min.
 
+   <img src=".\exp_report\光源均匀采样2倍视距330min.bmp" alt="光源均匀采样2倍视距330min" style="zoom:100%;" />
    ![光源均匀采样tonemapping gamma0.25视点两倍距离](./exp_report/光源均匀采样2倍视距330min.bmp)
 
    
